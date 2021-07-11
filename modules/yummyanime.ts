@@ -414,6 +414,10 @@ export default class YummyAnime extends ParseModule {
         }
 
         buffer = writePsdBuffer(psd, { invalidateTextLayers: true });
-        fs.writeFileSync('./temp/my-file.psd', buffer);
+
+        let randName = this.makeid(7);
+        fs.writeFileSync(`./temp/${randName}.psd`, buffer);
+
+        return Promise.resolve(randName);
     }
 }

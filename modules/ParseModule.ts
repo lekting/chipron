@@ -5,6 +5,7 @@ import config from '../config';
 import * as fs from 'fs';
 import cf_bypass from '../cf-bypass';
 import ParsedObject from '../interfaces/IParseObject';
+import { NodeCanvasRenderingContext2D } from 'canvas';
 
 export default abstract class Module {
     name: string;
@@ -28,10 +29,70 @@ export default abstract class Module {
         return config;
     }
 
-    abstract parseObjects?(_: string): Promise<ParsedObject>;
-    abstract downloadMovie?(_: string[]): Promise<any>;
-    abstract writePsd?(_: ParsedObject): Promise<void>;
-    abstract getOutText?(_: ParsedObject): string;
+    abstract parseObjects(_: string): Promise<ParsedObject>;
+    abstract downloadMovie(_: string[]): Promise<any>;
+    abstract getOutText(_: ParsedObject): string;
+
+    writePsd(_: ParsedObject): Promise<string> {
+        return Promise.resolve(null);
+    }
+
+    async convertPSDToJPG(psdFilePath: string): Promise<void> {
+        return new Promise((resolve) => {
+            let proc = spawn('magick', [
+                'convert',
+                `${psdFilePath}`,
+                psdFilePath.replace('.psd', '.jpg'),
+            ]);
+
+            proc.on('close', () => resolve());
+        });
+    }
+
+    writeCopyright(ctx: NodeCanvasRenderingContext2D) {
+        ctx.font = '25.53px AA American Captain';
+
+        ctx.fillStyle = 'white';
+        ctx.fillText('@CHIPRON', 750, 50);
+        ctx.restore();
+    }
+
+    writeTitle(
+        ctx: NodeCanvasRenderingContext2D,
+        text: string,
+        fontSize: number,
+        x: number,
+        y: number,
+        fontWeight: string = 'Black'
+    ) {
+        if (fontWeight == 'Black')
+            ctx.font = fontSize + 'px Arial ' + fontWeight;
+        else
+            ctx.font =
+                'normal ' +
+                fontWeight.toLowerCase() +
+                ' ' +
+                fontSize +
+                'px Arial';
+
+        ctx.fillStyle = 'white';
+        ctx.fillText(text, x, y - 5);
+        ctx.restore();
+    }
+
+    writeText(
+        ctx: NodeCanvasRenderingContext2D,
+        text: string,
+        fontSize: number,
+        x: number,
+        y: number
+    ) {
+        fontSize += 4;
+        ctx.font = fontSize + 'px Arial';
+        ctx.fillStyle = 'white';
+        ctx.fillText(text, x, y - 5);
+        ctx.restore();
+    }
 
     async downloadPosterTemp(url: string): Promise<void> {
         return new Promise((resolve) => {

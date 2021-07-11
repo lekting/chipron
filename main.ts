@@ -22,6 +22,8 @@ import TelegramBot from 'node-telegram-bot-api';
 import ParseModule from './modules/ParseModule';
 import cf_bypass from './cf-bypass';
 
+import { createCanvas, loadImage } from 'canvas';
+
 const bot = new TelegramBot(config.telegramBotToken, {
     polling: true,
 });
@@ -116,7 +118,11 @@ bot.on('message', async (message) => {
 
     let parsed = await module.parseObjects(message.text);
 
-    await module.writePsd(parsed);
+    let templateName = await module.writePsd(parsed);
+
+    if (templateName) {
+        //TODO: send psd and export png;
+    }
 
     let out_text = module.getOutText(parsed);
 

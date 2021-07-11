@@ -2,7 +2,7 @@ import pretty from 'pretty';
 import cf_bypass from '../cf-bypass';
 
 import { readPsd, writePsdBuffer } from 'ag-psd';
-import { createCanvas, loadImage } from 'canvas';
+import { registerFont, createCanvas, loadImage } from 'canvas';
 import * as fs from 'fs';
 import ParseModule from './ParseModule';
 import ParsedObject from '../interfaces/IParseObject';
@@ -263,62 +263,190 @@ export default class rezka extends ParseModule {
 
         let texts = psd.children[2].children;
 
+        const canvas = createCanvas(1000, 600);
+        const ctx = canvas.getContext('2d');
+
+        ctx.drawImage(await loadImage('./assets/1.jpg'), 0, 0, 1000, 600);
+        ctx.drawImage(await loadImage('./assets/2.png'), 64, 128);
+
+        this.writeCopyright(ctx);
+
+        ctx.setTransform(1, 0, 0, 1.2, 0, 0);
         for (let layer of texts) {
             //Drawing image
             if (layer.name == 'Layer 113' && object.poster) {
                 //TODO: if no poster - replace by ?
-                const canvas = createCanvas(316, 474);
-                const ctx = canvas.getContext('2d');
+                let canvasPoster = createCanvas(
+                    layer.canvas.width,
+                    layer.canvas.height
+                );
+                let ctxPoster = canvasPoster.getContext('2d');
 
                 await this.downloadPosterTemp(object.poster);
 
                 let image = await loadImage('./temp/temp.jpg');
 
-                ctx.drawImage(image, 0, 0, 316, 474);
+                ctxPoster.drawImage(
+                    image,
+                    0,
+                    0,
+                    layer.canvas.width,
+                    layer.canvas.height
+                );
 
-                layer.canvas = canvas as any;
+                let saved = ctx.getTransform();
+                ctx.resetTransform();
+                ctx.drawImage(
+                    image,
+                    layer.left,
+                    layer.top,
+                    layer.canvas.width,
+                    layer.canvas.height
+                );
 
+                layer.canvas = canvasPoster as any;
+
+                ctx.setTransform(saved);
                 fs.unlinkSync('./temp/temp.jpg');
             }
 
-            if (layer.name === '@title' && object.name)
+            if (layer.name === '@title' && object.name) {
                 layer.text.text =
                     object.name.length > 26
                         ? object.name.slice(0, 26) + '...'
                         : object.name;
 
-            if (layer.name === '@year' && object.year)
+                this.writeTitle(
+                    ctx,
+                    layer.text.text,
+                    26.66,
+                    layer.left,
+                    layer.top + 15
+                );
+            }
+
+            if (layer.name === '@year' && object.year) {
                 layer.text.text = object.year;
+
+                this.writeTitle(
+                    ctx,
+                    'Дата выхода',
+                    27.66,
+                    65,
+                    layer.top,
+                    'Bold'
+                );
+                this.writeText(
+                    ctx,
+                    layer.text.text,
+                    layer.text.style.fontSize,
+                    layer.left,
+                    layer.top
+                );
+            }
 
             if (
                 layer.name === '@country' &&
                 object.country &&
                 object.country.length
-            )
+            ) {
                 layer.text.text = object.country[0];
+
+                this.writeTitle(
+                    ctx,
+                    'Страна',
+                    27.66,
+                    65,
+                    layer.top - 10,
+                    'Bold'
+                );
+                this.writeText(
+                    ctx,
+                    layer.text.text,
+                    layer.text.style.fontSize,
+                    layer.left,
+                    layer.top - 10
+                );
+            }
 
             if (
                 layer.name === '@actors' &&
                 object.actors &&
                 object.actors.length
-            )
+            ) {
                 layer.text.text = `${object.actors[0]} ${object.actors[1]}`;
+
+                this.writeTitle(
+                    ctx,
+                    'В главных',
+                    27.66,
+                    65,
+                    layer.top - 33,
+                    'Bold'
+                );
+                this.writeText(
+                    ctx,
+                    layer.text.text,
+                    layer.text.style.fontSize,
+                    layer.left,
+                    layer.top - 33
+                );
+            }
 
             if (
                 layer.name === '@actors2' &&
                 object.actors &&
                 object.actors.length >= 3
-            )
+            ) {
                 layer.text.text = `${object.actors[2]} ${object.actors[3]}`;
 
-            if (layer.name === '@producer' && object.director)
+                this.writeTitle(
+                    ctx,
+                    'ролях',
+                    27.66,
+                    65,
+                    layer.top - 40,
+                    'Bold'
+                );
+                this.writeText(
+                    ctx,
+                    layer.text.text,
+                    layer.text.style.fontSize,
+                    layer.left,
+                    layer.top - 40
+                );
+            }
+
+            if (layer.name === '@producer' && object.director) {
                 layer.text.text = object.director;
+
+                this.writeTitle(
+                    ctx,
+                    'Режиссер',
+                    27.66,
+                    65,
+                    layer.top - 22,
+                    'Bold'
+                );
+                this.writeText(
+                    ctx,
+                    layer.text.text,
+                    layer.text.style.fontSize,
+                    layer.left,
+                    layer.top - 22
+                );
+            }
 
             if (layer.name === '@rating' && object.rating)
                 layer.text.text = object.rating;
         }
 
         buffer = writePsdBuffer(psd, { invalidateTextLayers: true });
-        fs.writeFileSync('./temp/my-file.psd', buffer);
+
+        let randName = this.makeid(7);
+        fs.writeFileSync(`./temp/${randName}.psd`, buffer);
+        fs.writeFileSync(`./temp/${randName}.jpg`, (canvas as any).toBuffer());
+
+        return Promise.resolve(randName);
     }
 }
