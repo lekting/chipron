@@ -1,0 +1,12 @@
+# node.js
+node_modules/
+npm-debug.log
+yarn-error.log
+package-lock.json
+build/
+td/
+_td_files/
+_td_database/
+_tglib_/
+temp/
+config.ts

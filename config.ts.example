@@ -1,0 +1,14 @@
+export default {
+    telegram: {
+        appId: -1,
+        apiHash: 'TELEGRAM_CLIENT_HASH',
+        firstName: 'TELEGRAM_CLIENT_NAME',
+        lastName: 'TELEGRAM_CLIENT_LASTNAME',
+        phone: 'TELEGRAM_CLIENT_PHONE',
+        code: 'TELEGRAM_CLIENT_CODE',
+        password: 'TELEGRAM_CLIENT_PASSWORD',
+    },
+    telegramTrashGroup: -1,
+    telegramAdmins: [], // ID администраторов
+    telegramBotToken: 'TELEGRAM_BOT_TOKEN', // Токен бота в телеге
+};

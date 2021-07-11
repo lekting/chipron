@@ -1,0 +1,40 @@
+{
+  "name": "chipron",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "tsc && node ./build/main.js",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "tsc": "tsc",
+    "clean": "tsc --build --clean"
+  },
+  "author": "lekting",
+  "license": "MIT",
+  "dependencies": {
+    "@types/inquirer": "^7.3.3",
+    "@types/pretty": "^2.0.0",
+    "@types/uuid": "^8.3.1",
+    "ag-psd": "^14.1.0",
+    "axios": "^0.21.1",
+    "canvas": "^2.8.0",
+    "colors": "^1.4.0",
+    "fs": "*",
+    "inquirer": "^8.1.1",
+    "mongodb": "^3.6.10",
+    "node-telegram-bot-api": "^0.53.0",
+    "pretty": "^2.0.0",
+    "puppeteer": "^10.1.0",
+    "puppeteer-extra": "^3.1.18",
+    "puppeteer-extra-plugin-stealth": "^2.7.8",
+    "striptags": "^3.2.0",
+    "tdl": "^7.0.0",
+    "tdl-tdlib-addon": "^1.0.1",
+    "typescript": "^4.3.5"
+  },
+  "devDependencies": {
+    "@types/node": "^16.3.1",
+    "@types/node-telegram-bot-api": "^0.51.4",
+    "tdlib-types": "^0.1001007.1"
+  }
+}

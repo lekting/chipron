@@ -1,0 +1,15 @@
+{
+    "compilerOptions": {
+        "lib": ["es2020.string"],
+        "outDir": "./build",
+        "target": "es2020",
+        "module": "commonjs",
+        "removeComments": true,
+        "moduleResolution": "node",
+        "strict": true,
+        "strictNullChecks": false,
+        "esModuleInterop": true,
+        "skipLibCheck": true,
+        "forceConsistentCasingInFileNames": true
+    }
+}
