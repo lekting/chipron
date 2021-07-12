@@ -359,6 +359,25 @@ export default class rezka extends ParseModule {
 
             if (layer.name === '@producer' && object.director) {
                 layer.text.text = object.director;
+<<<<<<< HEAD
+=======
+
+                this.writeTitle(
+                    ctx,
+                    'Режиссёр',
+                    27.66,
+                    65,
+                    layer.top - 22,
+                    'Bold'
+                );
+                this.writeText(
+                    ctx,
+                    layer.text.text,
+                    layer.text.style.fontSize,
+                    layer.left,
+                    layer.top - 22
+                );
+>>>>>>> 3f7347347bf79e0a467bdeb39d0ab7a4e8208b8f
             }
 
             if (layer.name === '@rating' && object.rating)
