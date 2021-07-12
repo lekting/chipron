@@ -422,7 +422,7 @@ export default class rezka extends ParseModule {
 
                 this.writeTitle(
                     ctx,
-                    'Режиссер',
+                    'Режиссёр',
                     27.66,
                     65,
                     layer.top - 22,
