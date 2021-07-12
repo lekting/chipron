@@ -1,83 +1,83 @@
-import pretty from "pretty";
-import cf_bypass from "../cf-bypass";
+import pretty from 'pretty';
+import cf_bypass from '../cf-bypass';
 
-import { readPsd, writePsdBuffer } from "ag-psd";
-import { registerFont, createCanvas, loadImage } from "canvas";
-import * as fs from "fs";
-import ParseModule from "./ParseModule";
-import ParsedObject from "../interfaces/IParseObject";
+import { readPsd, writePsdBuffer } from 'ag-psd';
+import { createCanvas, loadImage } from 'canvas';
+import * as fs from 'fs';
+import ParseModule from './ParseModule';
+import ParsedObject from '../interfaces/IParseObject';
 
 export default class rezka extends ParseModule {
     constructor(cfBypass: cf_bypass) {
-        super("rezka", ["rezka.ag", "hdrezka.sh"], cfBypass);
+        super('rezka', ['rezka.ag', 'hdrezka.sh'], cfBypass);
     }
 
     getTypeOfVideo(type: number): string {
         switch (type) {
             case 1: {
-                return "Сериал";
+                return 'Сериал';
             }
             case 2: {
-                return "Мультфильм";
+                return 'Мультфильм';
             }
             default: {
-                return "Фильм";
+                return 'Фильм';
             }
         }
     }
 
     getCountry(country: string): string {
         switch (country) {
-            case "Испания": {
-                return "🇪🇸";
+            case 'Испания': {
+                return '🇪🇸';
             }
-            case "Норвегия": {
-                return "🇳🇴";
+            case 'Норвегия': {
+                return '🇳🇴';
             }
-            case "Дания": {
-                return "🇩🇰";
+            case 'Дания': {
+                return '🇩🇰';
             }
-            case "Россия": {
-                return "🇷🇺";
+            case 'Россия': {
+                return '🇷🇺';
             }
-            case "Великобритания": {
-                return "🇬🇧";
+            case 'Великобритания': {
+                return '🇬🇧';
             }
-            case "Франция": {
-                return "🇫🇷";
+            case 'Франция': {
+                return '🇫🇷';
             }
-            case "Германия": {
-                return "🇩🇪";
+            case 'Германия': {
+                return '🇩🇪';
             }
-            case "Канада": {
-                return "🇨🇦";
+            case 'Канада': {
+                return '🇨🇦';
             }
-            case "Китай": {
-                return "🇨🇳";
+            case 'Китай': {
+                return '🇨🇳';
             }
-            case "Бразилия": {
-                return "🇧🇷";
+            case 'Бразилия': {
+                return '🇧🇷';
             }
-            case "Бельгия": {
-                return "🇧🇪";
+            case 'Бельгия': {
+                return '🇧🇪';
             }
-            case "Индия": {
-                return "🇮🇳";
+            case 'Индия': {
+                return '🇮🇳';
             }
-            case "Австралия": {
-                return "🇦🇺";
+            case 'Австралия': {
+                return '🇦🇺';
             }
-            case "Украина": {
-                return "🇺🇦";
+            case 'Украина': {
+                return '🇺🇦';
             }
-            case "Турция": {
-                return "🇹🇷";
+            case 'Турция': {
+                return '🇹🇷';
             }
-            case "Корея Южная": {
-                return "🇰🇷";
+            case 'Корея Южная': {
+                return '🇰🇷';
             }
             default: {
-                return "🇱🇷";
+                return '🇱🇷';
             }
         }
     }
@@ -86,30 +86,30 @@ export default class rezka extends ParseModule {
         return new Promise(async (resolve) => {
             let randName = this.makeid(7);
             await this.runFFMPEG([
-                "-hwaccel",
-                "cuvid",
-                "-i",
+                '-hwaccel',
+                'cuvid',
+                '-i',
                 url[0],
-                "-c:v",
-                "hevc_nvenc",
-                "-rc",
-                "vbr",
-                "-cq",
-                "24",
-                "-qmin",
-                "24",
-                "-qmax",
-                "24",
-                "-profile:v",
-                "main10",
-                "-pix_fmt",
-                "p010le",
-                "-b:v",
-                "0K",
-                "-c:a",
-                "aac",
-                "-movflags",
-                "faststart",
+                '-c:v',
+                'hevc_nvenc',
+                '-rc',
+                'vbr',
+                '-cq',
+                '24',
+                '-qmin',
+                '24',
+                '-qmax',
+                '24',
+                '-profile:v',
+                'main10',
+                '-pix_fmt',
+                'p010le',
+                '-b:v',
+                '0K',
+                '-c:a',
+                'aac',
+                '-movflags',
+                'faststart',
                 `./temp/${randName}.mp4`,
             ]);
 
@@ -121,17 +121,17 @@ export default class rezka extends ParseModule {
         let text = [];
         text.push(
             `🎬 **${content.name}**`,
-            `🎭 **Жанры:** ${this.connect(content.genres, "#")}`,
+            `🎭 **Жанры:** ${this.connect(content.genres, '#')}`,
             this.getCountry(content.country[0]) +
                 ` **${content.country[0]} | ${content.year}**`,
             `⏰ **${
-                content.type !== 1 ? "Длительность:" : "Длительность серии:"
+                content.type !== 1 ? 'Длительность:' : 'Длительность серии:'
             }** ~${content.duration}`,
-            "",
+            '',
             content.description,
             `#${this.getTypeOfVideo(content.type)}`
         );
-        return text.join("\n");
+        return text.join('\n');
     }
 
     parseObjects(url: string): Promise<ParsedObject> {
@@ -142,12 +142,12 @@ export default class rezka extends ParseModule {
                 let data = await this.cfBypass.getCookies({
                     url: url,
                     userAgent:
-                        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.97 Safari/537.36",
+                        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.97 Safari/537.36',
                     maxTimeout: 60000,
                 });
 
                 if (!data || !data.solution) {
-                    return reject("empty_link");
+                    return reject('empty_link');
                 }
                 html = pretty(data.solution.response).split(/\r?\n/);
             } catch (ex) {
@@ -171,10 +171,10 @@ export default class rezka extends ParseModule {
                     )[1];
                 }
 
-                if (element.includes("<h2>Дата выхода</h2>")) {
+                if (element.includes('<h2>Дата выхода</h2>')) {
                     data.year = html[i + 2]
                         .match(/\/">(.+)<\/a>/)[1]
-                        .replace(" года", "");
+                        .replace(' года', '');
                 }
 
                 if (element.includes('itemprop="director"')) {
@@ -183,11 +183,11 @@ export default class rezka extends ParseModule {
                     )[1];
                 }
 
-                if (element.includes("b-post__info_rates imdb")) {
+                if (element.includes('b-post__info_rates imdb')) {
                     data.rating = html[i].match(/s="bold">(.*?)<\/span>/)[1];
                 }
 
-                if (element.includes("<h2>Страна</h2>")) {
+                if (element.includes('<h2>Страна</h2>')) {
                     let re = [...html[i + 2].matchAll(/\/">(.*?)<\/a>/g)];
                     data.country = [];
 
@@ -203,7 +203,7 @@ export default class rezka extends ParseModule {
                     re.forEach((el) => data.actors.push(el[1]));
                 }
 
-                if (element.includes("initCDNMoviesEvents")) {
+                if (element.includes('initCDNMoviesEvents')) {
                     let matches = [
                         ...html[i + 2].matchAll(/(\[1080p\]|\[720p\])(.*?),/g),
                     ];
@@ -213,7 +213,7 @@ export default class rezka extends ParseModule {
                     if (matches[0] && matches[0].length > 1) {
                         data.movieLink.push(
                             matches[0][2]
-                                .replace(/\\\//g, "/")
+                                .replace(/\\\//g, '/')
                                 .match(/(.*?) or/)[1]
                         );
                     }
@@ -228,11 +228,11 @@ export default class rezka extends ParseModule {
                     );
                 }
 
-                if (element.includes("Про что сериал")) {
+                if (element.includes('Про что сериал')) {
                     data.type = 1;
                 }
 
-                if (element.includes("Про что мультфильм")) {
+                if (element.includes('Про что мультфильм')) {
                     data.type = 2;
                 }
 
@@ -240,7 +240,7 @@ export default class rezka extends ParseModule {
                     data.duration = element.match(/">(.+)<\/td>/)[1];
                 }
 
-                if (element.includes("<h2>Жанр</h2>")) {
+                if (element.includes('<h2>Жанр</h2>')) {
                     let re = [...html[i + 2].matchAll(/enre">(.*?)<\/span>/g)];
                     let temp = re;
                     data.genres = [];
@@ -256,7 +256,7 @@ export default class rezka extends ParseModule {
     }
 
     async writePsd(object: ParsedObject) {
-        let buffer = fs.readFileSync("./assets/template_base.psd");
+        let buffer = fs.readFileSync('./assets/template_base.psd');
 
         // read only document structure
         const psd = readPsd(buffer);
@@ -266,16 +266,16 @@ export default class rezka extends ParseModule {
         let { ctx, canvas } = await this.renderDefaultCanvas(object);
         for (let layer of texts) {
             //Drawing image
-            if (layer.name == "Layer 113" && object.poster) {
+            if (layer.name == 'Layer 113' && object.poster) {
                 //TODO: if no poster - replace by ?
                 let canvasPoster = createCanvas(
                     layer.canvas.width,
                     layer.canvas.height
                 );
-                let ctxPoster = canvasPoster.getContext("2d");
+                let ctxPoster = canvasPoster.getContext('2d');
 
                 //Poster downloading in renderDefaultCanvas function
-                let image = await loadImage("./temp/temp.jpg");
+                let image = await loadImage('./temp/temp.jpg');
 
                 ctxPoster.drawImage(
                     image,
@@ -287,22 +287,22 @@ export default class rezka extends ParseModule {
 
                 layer.canvas = canvasPoster as any;
 
-                fs.unlinkSync("./temp/temp.jpg");
+                fs.unlinkSync('./temp/temp.jpg');
             }
 
-            if (layer.name === "@title" && object.name) {
+            if (layer.name === '@title' && object.name) {
                 layer.text.text =
-                    object.name.length > 26
-                        ? object.name.slice(0, 26) + "..."
+                    object.name.length > 31
+                        ? object.name.slice(0, 31) + '...'
                         : object.name;
             }
 
-            if (layer.name === "@year" && object.year) {
+            if (layer.name === '@year' && object.year) {
                 layer.text.text = object.year;
             }
 
             if (
-                layer.name === "@country" &&
+                layer.name === '@country' &&
                 object.country &&
                 object.country.length
             ) {
@@ -310,7 +310,7 @@ export default class rezka extends ParseModule {
             }
 
             if (
-                layer.name === "@actors" &&
+                layer.name === '@actors' &&
                 object.actors &&
                 object.actors.length
             ) {
@@ -318,11 +318,11 @@ export default class rezka extends ParseModule {
 
                 this.writeTitle(
                     ctx,
-                    "В главных",
+                    'В главных',
                     27.66,
                     65,
                     layer.top - 33,
-                    "Bold"
+                    'Bold'
                 );
                 this.writeText(
                     ctx,
@@ -334,7 +334,7 @@ export default class rezka extends ParseModule {
             }
 
             if (
-                layer.name === "@actors2" &&
+                layer.name === '@actors2' &&
                 object.actors &&
                 object.actors.length >= 3
             ) {
@@ -342,11 +342,11 @@ export default class rezka extends ParseModule {
 
                 this.writeTitle(
                     ctx,
-                    "ролях",
+                    'ролях',
                     27.66,
                     65,
                     layer.top - 40,
-                    "Bold"
+                    'Bold'
                 );
                 this.writeText(
                     ctx,
@@ -357,11 +357,11 @@ export default class rezka extends ParseModule {
                 );
             }
 
-            if (layer.name === "@producer" && object.director) {
+            if (layer.name === '@producer' && object.director) {
                 layer.text.text = object.director;
             }
 
-            if (layer.name === "@rating" && object.rating)
+            if (layer.name === '@rating' && object.rating)
                 layer.text.text = object.rating;
         }
 

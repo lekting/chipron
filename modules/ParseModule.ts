@@ -1,11 +1,10 @@
-import axios from "axios";
+import axios from 'axios';
 
-import { spawn } from "child_process";
-import config from "../config";
-import * as fs from "fs";
-import cf_bypass from "../cf-bypass";
-import ParsedObject from "../interfaces/IParseObject";
-import { createCanvas, loadImage, NodeCanvasRenderingContext2D } from "canvas";
+import { spawn } from 'child_process';
+import * as fs from 'fs';
+import cf_bypass from '../cf-bypass';
+import ParsedObject from '../interfaces/IParseObject';
+import { createCanvas, loadImage, NodeCanvasRenderingContext2D } from 'canvas';
 
 export default abstract class Module {
     name: string;
@@ -14,7 +13,7 @@ export default abstract class Module {
     private site: string[];
 
     characters =
-        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
 
     constructor(name: string, site: string[], cfBypass: cf_bypass) {
         this.name = name;
@@ -37,13 +36,31 @@ export default abstract class Module {
     async renderDefaultCanvas(object: ParsedObject) {
         console.log(object);
         const canvas = createCanvas(1000, 600);
-        const ctx = canvas.getContext("2d");
+        const ctx = canvas.getContext('2d');
 
         //Render background
-        ctx.drawImage(await loadImage("./assets/1.jpg"), 0, 0, 1000, 600);
+        ctx.drawImage(await loadImage('./assets/1.jpg'), 0, 0, 1000, 600);
 
         //Render line under title
-        ctx.drawImage(await loadImage("./assets/2.png"), 64, 128);
+        ctx.drawImage(await loadImage('./assets/2.png'), 64, 128);
+
+        if (object.tempVideoName) {
+            //Render thumbnails
+            ctx.drawImage(
+                await loadImage(`./temp/${object.tempVideoName}_1.jpg`),
+                65,
+                376
+            );
+            ctx.drawImage(
+                await loadImage(`./temp/${object.tempVideoName}_2.jpg`),
+                338,
+                376
+            );
+
+            //delete thumbnails
+            fs.unlinkSync(`./temp/${object.tempVideoName}_1.jpg`);
+            fs.unlinkSync(`./temp/${object.tempVideoName}_2.jpg`);
+        }
 
         //Writing channel name on poster
         this.writeCopyright(ctx);
@@ -53,8 +70,8 @@ export default abstract class Module {
         //Write title of movie
         this.writeTitle(
             ctx,
-            object.name.length > 26
-                ? object.name.slice(0, 26) + "..."
+            object.name.length > 31
+                ? object.name.slice(0, 31) + '...'
                 : object.name,
             26.66,
             65,
@@ -63,7 +80,7 @@ export default abstract class Module {
         let height = 174;
         if (object.year) {
             //Write date title
-            this.writeTitle(ctx, "Дата выхода", 27.66, 65, height, "Bold");
+            this.writeTitle(ctx, 'Дата выхода', 27.66, 65, height, 'Bold');
             //Write date
             this.writeText(ctx, object.year, 25.73, 298, height);
         }
@@ -71,7 +88,7 @@ export default abstract class Module {
         if (object.country && object.country.length) {
             //Write country title
             height += 44;
-            this.writeTitle(ctx, "Страна", 27.66, 65, height, "Bold");
+            this.writeTitle(ctx, 'Страна', 27.66, 65, height, 'Bold');
             //Write country
             this.writeText(ctx, object.country[0], 25.73, 298, height);
         }
@@ -79,13 +96,13 @@ export default abstract class Module {
         if (object.director) {
             height += 44;
             //Write director title
-            this.writeTitle(ctx, "Режиссёр", 27.66, 65, height, "Bold");
+            this.writeTitle(ctx, 'Режиссёр', 27.66, 65, height, 'Bold');
             //Write director
             this.writeText(ctx, object.director, 25.73, 298, height);
         }
 
         await this.downloadPosterTemp(object.poster);
-        let image = await loadImage("./temp/temp.jpg");
+        let image = await loadImage('./temp/temp.jpg');
 
         let saved = ctx.getTransform();
         ctx.resetTransform();
@@ -97,10 +114,10 @@ export default abstract class Module {
     }
 
     writeCopyright(ctx: NodeCanvasRenderingContext2D) {
-        ctx.font = "25.53px AA American Captain";
+        ctx.font = '25.53px AA American Captain';
 
-        ctx.fillStyle = "white";
-        ctx.fillText("@CHIPRON", 750, 50);
+        ctx.fillStyle = 'white';
+        ctx.fillText('@CHIPRON', 745, 50);
         ctx.restore();
     }
 
@@ -110,14 +127,14 @@ export default abstract class Module {
         fontSize: number,
         x: number,
         y: number,
-        fontWeight: string = "Black"
+        fontWeight: string = 'Black'
     ) {
-        if (fontWeight == "Black")
+        if (fontWeight == 'Black')
             ctx.font = `${fontSize}px Arial ${fontWeight}`;
         else
             ctx.font = `normal ${fontWeight.toLowerCase()} ${fontSize}px Arial`;
 
-        ctx.fillStyle = "white";
+        ctx.fillStyle = 'white';
         ctx.fillText(text, x, y - 5);
         ctx.restore();
     }
@@ -131,7 +148,7 @@ export default abstract class Module {
     ) {
         fontSize += 4;
         ctx.font = `${fontSize}px Arial`;
-        ctx.fillStyle = "white";
+        ctx.fillStyle = 'white';
         ctx.fillText(text, x, y - 5);
         ctx.restore();
     }
@@ -140,19 +157,19 @@ export default abstract class Module {
         return new Promise((resolve) => {
             axios({
                 url,
-                responseType: "stream",
+                responseType: 'stream',
             }).then((response) => {
                 response.data.pipe(
                     fs
-                        .createWriteStream("./temp/temp.jpg")
-                        .on("close", () => resolve())
+                        .createWriteStream('./temp/temp.jpg')
+                        .on('close', () => resolve())
                 );
             });
         });
     }
 
     makeid(length: number) {
-        let result = "";
+        let result = '';
         let charactersLength = this.characters.length;
 
         for (let i = 0; i < length; i++) {
@@ -164,25 +181,25 @@ export default abstract class Module {
         return result;
     }
 
-    connect(arr: string[], del: string = "#") {
-        if (!arr.length) return "";
+    connect(arr: string[], del: string = '#') {
+        if (!arr.length) return '';
 
         return arr
             .map((val) => {
                 return `${del}${val}`;
             })
-            .join(", ");
+            .join(', ');
     }
 
     runFFMPEG(args: string[], allLog?: boolean): Promise<void> {
         return new Promise((resolve) => {
-            let proc = spawn("ffmpeg", ["-y", "-hide_banner", ...args]);
+            let proc = spawn('ffmpeg', ['-y', '-hide_banner', ...args]);
 
-            proc.stderr.setEncoding("utf8");
-            proc.stderr.on("data", (data: string) => {
+            proc.stderr.setEncoding('utf8');
+            proc.stderr.on('data', (data: string) => {
                 if (allLog) console.log(data);
 
-                if (!data.includes("time=")) return;
+                if (!data.includes('time=')) return;
 
                 console.log(
                     `${data.match(/time=(.*?) /)[1]}, ${
@@ -191,7 +208,7 @@ export default abstract class Module {
                 );
             });
 
-            proc.on("close", () => resolve());
+            proc.on('close', () => resolve());
         });
     }
 
@@ -204,11 +221,11 @@ export default abstract class Module {
         axios
             .post(url, data, {
                 headers: {
-                    "Content-Type": "application/x-www-form-urlencoded",
-                    Accept: "image/webp,image/apng,image/*,*/*;q=0.8",
-                    dnt: "1",
-                    "User-Agent":
-                        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.122 Safari/537.36",
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    Accept: 'image/webp,image/apng,image/*,*/*;q=0.8',
+                    dnt: '1',
+                    'User-Agent':
+                        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.122 Safari/537.36',
                     ...external_headers,
                 },
             })
@@ -218,7 +235,7 @@ export default abstract class Module {
 
     makeRequest(url: string, callback: any) {
         axios({
-            method: "get",
+            method: 'get',
             url: url,
         })
             .then((response) => callback(response.data))

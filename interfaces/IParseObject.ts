@@ -15,4 +15,5 @@ export default interface ParsedObject {
     season?: string;
     movieLink?: string[];
     count_of_series?: number;
+    tempVideoName?: string;
 }
