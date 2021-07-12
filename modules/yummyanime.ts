@@ -1,34 +1,34 @@
-import striptags from 'striptags';
-import cf_bypass from '../cf-bypass';
-import fs from 'fs';
-import ParseModule from './ParseModule';
-import { readPsd, writePsdBuffer } from 'ag-psd';
-import { createCanvas, loadImage } from 'canvas';
-import ParsedObject from '../interfaces/IParseObject';
+import striptags from "striptags";
+import cf_bypass from "../cf-bypass";
+import fs from "fs";
+import ParseModule from "./ParseModule";
+import { readPsd, writePsdBuffer } from "ag-psd";
+import { createCanvas, loadImage } from "canvas";
+import ParsedObject from "../interfaces/IParseObject";
 
 export default class YummyAnime extends ParseModule {
     allowedTranslators = [
-        'AniLibria',
-        'AniDUB',
-        'SHIZA Project',
-        'JAM CLUB',
-        'Студийная Банда',
-        'StudioBand',
-        'Дублирование',
-        'Дубляж',
+        "AniLibria",
+        "AniDUB",
+        "SHIZA Project",
+        "JAM CLUB",
+        "Студийная Банда",
+        "StudioBand",
+        "Дублирование",
+        "Дубляж",
     ];
 
     constructor(cfBypass: cf_bypass) {
-        super('yummyanime', ['yummyanime.club'], cfBypass);
+        super("yummyanime", ["yummyanime.club"], cfBypass);
     }
 
     getTypeOfVideo(type: number): string {
         switch (type) {
             case 1: {
-                return 'Аниме фильм';
+                return "Аниме фильм";
             }
             default: {
-                return 'Аниме сериал';
+                return "Аниме сериал";
             }
         }
     }
@@ -37,17 +37,17 @@ export default class YummyAnime extends ParseModule {
         let text = [];
         text.push(
             `🎬 **${content.name}**`,
-            `🎭 **Жанры:** ${this.connect(content.genres, ',')}`,
+            `🎭 **Жанры:** ${this.connect(content.genres, ",")}`,
             `🇯🇵 **${content.country[0]} | ${content.year}**`
         );
 
         if (content.count_of_series)
             text.push(`📝 **Эпизодов:** ${content.count_of_series}`);
 
-        text.push('', content.description);
+        text.push("", content.description);
 
-        text.push('', '#Аниме');
-        return text.join('\n');
+        text.push("", "#Аниме");
+        return text.join("\n");
     }
 
     parseObjects(url: string): Promise<ParsedObject> {
@@ -58,12 +58,12 @@ export default class YummyAnime extends ParseModule {
                 let data = await this.cfBypass.getCookies({
                     url: url,
                     userAgent:
-                        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.97 Safari/537.36',
+                        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.97 Safari/537.36",
                     maxTimeout: 60000,
                 });
 
                 if (!data || !data.solution) {
-                    return reject('empty_link');
+                    return reject("empty_link");
                 }
                 html = data.solution.response.split(/\r?\n/);
             } catch (ex) {
@@ -72,110 +72,102 @@ export default class YummyAnime extends ParseModule {
 
             let data: ParsedObject = {};
 
-            let i = 0;
-
             data.type = 0;
 
             data.url = url;
 
-            data.country = ['Япония'];
+            data.country = ["Япония"];
 
-            for (let element of html) {
+            for (let i = 0; i < html.length; i++) {
+                let element = html[i];
                 if (element.includes('class="preview-rating"')) {
                     data.name = html[i - 4].trim();
                 }
 
-                if (element.includes('"rating-info"')) {
+                if (element.includes('class="rating-info"')) {
                     data.name = element.match(/title="(.*?)"/)[1];
                 }
 
                 if (element.includes('"og:image"')) {
                     data.poster =
-                        'https://yummyanime.club' +
+                        "https://yummyanime.club" +
                         element.match(/content="(.*?)"/)[1];
                 }
 
-                if (element.includes('<span>Год: </span>')) {
+                if (element.includes("<span>Год: </span>")) {
                     data.year = striptags(
-                        element.replace('<span>Год: </span>', '')
+                        element.replace("<span>Год: </span>", "")
                     ).trim();
                 }
 
-                if (element.includes('<span>Режиссер:</span>')) {
+                if (element.includes("<span>Режиссер:</span>")) {
                     data.director = striptags(html[i + 2]).trim();
                 }
 
                 if (
                     element.includes('id="content-desc-text"') &&
-                    element.includes('<p')
+                    element.includes("<p")
                 ) {
                     data.description = striptags(element)
                         .trim()
-                        .replace(/&nbsp;/g, ' ')
-                        .replace(/&laquo;/g, '«')
-                        .replace(/&raquo;/g, '»')
-                        .replace(/&mdash;/g, '—')
+                        .replace(/&nbsp;/g, " ")
+                        .replace(/&laquo;/g, "«")
+                        .replace(/&raquo;/g, "»")
+                        .replace(/&mdash;/g, "—")
                         .replace(/&quot;/g, '"')
-                        .replace(/&ndash;/g, '–')
-                        .replace(/&hellip;/g, '…');
+                        .replace(/&ndash;/g, "–")
+                        .replace(/&hellip;/g, "…");
                 }
 
-                if (element.includes('Тип:') && element.includes('фильм')) {
+                if (element.includes("Тип:") && element.includes("фильм")) {
                     data.type = 1;
                 }
 
-                if (element.includes('<span>Сезон:</span>')) {
+                if (element.includes("<span>Сезон:</span>")) {
                     data.season = striptags(
-                        element.replace('<span>Сезон:</span>', '')
+                        element.replace("<span>Сезон:</span>", "")
                     ).trim();
                 }
 
                 if (
                     element.includes('<span class="genre">Жанр:</span>') ||
-                    element.includes('span>Жанр:</span>')
+                    element.includes("span>Жанр:</span>")
                 ) {
                     data.genres = [];
-                    for (let j = i; j < html.length; j++) {
-                        if (html[j].includes('</ul>')) {
-                            i += j;
-                            break;
-                        }
+                    for (; i < html.length; i++) {
+                        if (html[i].includes("</ul>")) break;
 
-                        if (html[j].includes('<li>'))
-                            data.genres.push(striptags(html[j]).trim());
+                        if (html[i].includes("<li>"))
+                            data.genres.push(striptags(html[i]).trim());
                     }
                 }
 
-                if (element.includes('<span>Серии:</span>')) {
+                if (element.includes("<span>Серии:</span>")) {
                     data.count_of_series = parseInt(
                         striptags(
-                            element.replace('<span>Серии:</span>', '')
+                            element.replace("<span>Серии:</span>", "")
                         ).trim()
                     );
                 }
 
                 if (
-                    element.includes('Kodik') &&
-                    element.includes('video-block-description') &&
+                    element.includes("Kodik") &&
+                    element.includes("video-block-description") &&
                     this.isPlayer(element) &&
                     !data.movieLink
                 ) {
                     data.movieLink = [];
-                    for (let j = i; j < html.length; j++) {
-                        let block = html[j];
+                    for (; i < html.length; i++) {
+                        let block = html[i];
                         if (block.includes('data-href="')) {
                             data.movieLink.push(
                                 block.match(/data-href="(.*?)"/)[1]
                             );
                         }
 
-                        if (block.includes('iframe')) {
-                            i += j;
-                            break;
-                        }
+                        if (block.includes("iframe")) break;
                     }
                 }
-                i++;
             }
 
             resolve(data);
@@ -196,16 +188,16 @@ export default class YummyAnime extends ParseModule {
             let randName = this.makeid(7);
 
             await this.runFFMPEG([
-                '-i',
-                'http:' + downloadLink,
-                '-acodec',
-                'copy',
-                '-vcodec',
-                'copy',
-                '-vbsf',
-                'h264_mp4toannexb',
-                '-f',
-                'mpegts',
+                "-i",
+                "http:" + downloadLink,
+                "-acodec",
+                "copy",
+                "-vcodec",
+                "copy",
+                "-vbsf",
+                "h264_mp4toannexb",
+                "-f",
+                "mpegts",
                 `./temp/${randName}.ts`,
             ]);
 
@@ -226,20 +218,20 @@ export default class YummyAnime extends ParseModule {
                     .map((val) => {
                         return `file '${val}.ts'`;
                     })
-                    .join('\n')
+                    .join("\n")
             );
 
             await this.runFFMPEG([
-                '-f',
-                'concat',
-                '-safe',
-                '0',
-                '-i',
+                "-f",
+                "concat",
+                "-safe",
+                "0",
+                "-i",
                 `./temp/${concateFileName}.txt`,
-                '-acodec',
-                'copy',
-                '-vcodec',
-                'copy',
+                "-acodec",
+                "copy",
+                "-vcodec",
+                "copy",
                 `./temp/${randName}_out.mp4`,
             ]);
 
@@ -261,32 +253,32 @@ export default class YummyAnime extends ParseModule {
             let randName = this.makeid(7);
 
             await this.runFFMPEG([
-                '-hwaccel',
-                'cuvid',
-                '-i',
+                "-hwaccel",
+                "cuvid",
+                "-i",
                 `./temp/${concated}.mp4`,
-                '-c:v',
-                'hevc_nvenc',
-                '-rc',
-                'vbr',
-                '-cq',
-                '24',
-                '-qmin',
-                '24',
-                '-qmax',
-                '24',
-                '-profile:v',
-                'main10',
-                '-pix_fmt',
-                'p010le',
-                '-b:v',
-                '0K',
-                '-c:a',
-                'aac',
-                '-map',
-                '0',
-                '-movflags',
-                'faststart',
+                "-c:v",
+                "hevc_nvenc",
+                "-rc",
+                "vbr",
+                "-cq",
+                "24",
+                "-qmin",
+                "24",
+                "-qmax",
+                "24",
+                "-profile:v",
+                "main10",
+                "-pix_fmt",
+                "p010le",
+                "-b:v",
+                "0K",
+                "-c:a",
+                "aac",
+                "-map",
+                "0",
+                "-movflags",
+                "faststart",
                 `./temp/${randName}.mp4`,
             ]);
 
@@ -298,43 +290,43 @@ export default class YummyAnime extends ParseModule {
 
     public fuckKodik(link: string): Promise<string> {
         return new Promise((resolve) => {
-            this.makeRequest('http:' + link, (body: any) => {
+            this.makeRequest("http:" + link, (body: any) => {
                 if (!body) {
-                    return resolve('');
+                    return resolve("");
                 }
 
                 let html = body.split(/\r?\n/);
 
                 for (let i = 0; i < html.length; i++) {
                     let elem = html[i];
-                    if (elem.includes('iframe.src')) {
+                    if (elem.includes("iframe.src")) {
                         let link = elem.match(/iframe.src = "(.+)";/)[1];
-                        let splitted = link.split('/');
+                        let splitted = link.split("/");
 
                         let attrs: string[] = splitted[splitted.length - 1]
-                            .split('?')[1]
-                            .split('&');
+                            .split("?")[1]
+                            .split("&");
 
                         let data: any = {
                             bad_user: false,
-                            hash2: 'vbWENyTwIn8I',
-                            d: 'kodik.info',
-                            d_sign: '8022187ea4f80a819c8b1295a86abff3713891fb8ec9f2b3958cd8152763228e',
-                            pd: '',
-                            pd_sign: '',
-                            ref: 'https://kodik.info/',
+                            hash2: "vbWENyTwIn8I",
+                            d: "kodik.info",
+                            d_sign: "8022187ea4f80a819c8b1295a86abff3713891fb8ec9f2b3958cd8152763228e",
+                            pd: "",
+                            pd_sign: "",
+                            ref: "https://kodik.info/",
                             ref_sign:
-                                'e974598ad26a91e91d60bc0a954a2028105ec11f0a441c41ea25ea0db1a2cfc9',
+                                "e974598ad26a91e91d60bc0a954a2028105ec11f0a441c41ea25ea0db1a2cfc9",
                             hash: splitted[6],
-                            type: splitted[4] || 'seria',
+                            type: splitted[4] || "seria",
                             id: splitted[5],
-                            info: '{}',
+                            info: "{}",
                         };
 
                         attrs.forEach((atr) => {
-                            let splitted_atr = atr.split('=');
+                            let splitted_atr = atr.split("=");
 
-                            if (['min_age'].includes(splitted_atr[0])) return;
+                            if (["min_age"].includes(splitted_atr[0])) return;
 
                             data[splitted_atr[0]] = splitted_atr[1];
                         });
@@ -346,12 +338,12 @@ export default class YummyAnime extends ParseModule {
                         );
 
                         this.makePostRequest(
-                            'https://kodik.info/get-video-info',
+                            "https://kodik.info/get-video-info",
                             params,
                             (body: any) => {
-                                if (!body) return resolve('');
+                                if (!body) return resolve("");
 
-                                resolve(body.links['720'][0].src);
+                                resolve(body.links["720"][0].src);
                             }
                         );
                         break;
@@ -362,61 +354,68 @@ export default class YummyAnime extends ParseModule {
     }
 
     async writePsd(object: ParsedObject) {
-        let buffer = fs.readFileSync('./assets/template_anime.psd');
+        let buffer = fs.readFileSync("./assets/template_anime.psd");
 
         // read only document structure
         const psd = readPsd(buffer);
 
         let texts = psd.children[2].children;
 
+        let { ctx, canvas } = await this.renderDefaultCanvas(object);
         for (let layer of texts) {
             //Drawing image
-            if (layer.name == 'Layer 113' && object.poster) {
+            if (layer.name == "Layer 113" && object.poster) {
                 //TODO: if no poster - replace by ?
-                const canvas = createCanvas(316, 474);
-                const ctx = canvas.getContext('2d');
+                let canvasPoster = createCanvas(
+                    layer.canvas.width,
+                    layer.canvas.height
+                );
+                let ctxPoster = canvasPoster.getContext("2d");
 
-                await this.downloadPosterTemp(object.poster);
+                //Poster downloading in renderDefaultCanvas function
+                let image = await loadImage("./temp/temp.jpg");
 
-                let image = await loadImage('./temp/temp.jpg');
+                ctxPoster.drawImage(
+                    image,
+                    0,
+                    0,
+                    layer.canvas.width,
+                    layer.canvas.height
+                );
 
-                ctx.drawImage(image, 0, 0, 316, 474);
-
-                layer.canvas = canvas as any;
-
-                fs.unlinkSync('./temp/temp.jpg');
+                layer.canvas = canvasPoster as any;
+                fs.unlinkSync("./temp/temp.jpg");
             }
 
-            if (layer.name === '@title' && object.name)
+            if (layer.name === "@title" && object.name) {
                 layer.text.text =
                     object.name.length > 26
-                        ? object.name.slice(0, 26) + '...'
+                        ? object.name.slice(0, 26) + "..."
                         : object.name;
+            }
 
-            if (layer.name === '@year' && object.year)
+            if (layer.name === "@year" && object.year) {
                 layer.text.text = object.year;
+            }
 
             if (
-                layer.name === '@country' &&
+                layer.name === "@country" &&
                 object.country &&
                 object.country.length
-            )
+            ) {
                 layer.text.text = object.country[0];
+            }
 
-            if (layer.name === '@producer' && object.director)
+            if (layer.name === "@producer" && object.director) {
                 layer.text.text = object.director;
-
-            if (layer.name === '@subdub' && object.rating)
-                layer.text.text = object.rating;
-
-            if (layer.name === '@rating' && object.rating)
-                layer.text.text = object.rating;
+            }
         }
 
         buffer = writePsdBuffer(psd, { invalidateTextLayers: true });
 
         let randName = this.makeid(7);
         fs.writeFileSync(`./temp/${randName}.psd`, buffer);
+        fs.writeFileSync(`./temp/${randName}.jpg`, (canvas as any).toBuffer());
 
         return Promise.resolve(randName);
     }

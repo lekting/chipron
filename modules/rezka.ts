@@ -263,15 +263,7 @@ export default class rezka extends ParseModule {
 
         let texts = psd.children[2].children;
 
-        const canvas = createCanvas(1000, 600);
-        const ctx = canvas.getContext('2d');
-
-        ctx.drawImage(await loadImage('./assets/1.jpg'), 0, 0, 1000, 600);
-        ctx.drawImage(await loadImage('./assets/2.png'), 64, 128);
-
-        this.writeCopyright(ctx);
-
-        ctx.setTransform(1, 0, 0, 1.2, 0, 0);
+        let { ctx, canvas }  = await this.renderDefaultCanvas(object);
         for (let layer of texts) {
             //Drawing image
             if (layer.name == 'Layer 113' && object.poster) {
@@ -282,8 +274,7 @@ export default class rezka extends ParseModule {
                 );
                 let ctxPoster = canvasPoster.getContext('2d');
 
-                await this.downloadPosterTemp(object.poster);
-
+                //Poster downloading in renderDefaultCanvas function
                 let image = await loadImage('./temp/temp.jpg');
 
                 ctxPoster.drawImage(
@@ -294,19 +285,8 @@ export default class rezka extends ParseModule {
                     layer.canvas.height
                 );
 
-                let saved = ctx.getTransform();
-                ctx.resetTransform();
-                ctx.drawImage(
-                    image,
-                    layer.left,
-                    layer.top,
-                    layer.canvas.width,
-                    layer.canvas.height
-                );
-
                 layer.canvas = canvasPoster as any;
 
-                ctx.setTransform(saved);
                 fs.unlinkSync('./temp/temp.jpg');
             }
 
@@ -315,34 +295,10 @@ export default class rezka extends ParseModule {
                     object.name.length > 26
                         ? object.name.slice(0, 26) + '...'
                         : object.name;
-
-                this.writeTitle(
-                    ctx,
-                    layer.text.text,
-                    26.66,
-                    layer.left,
-                    layer.top + 15
-                );
             }
 
             if (layer.name === '@year' && object.year) {
                 layer.text.text = object.year;
-
-                this.writeTitle(
-                    ctx,
-                    'Дата выхода',
-                    27.66,
-                    65,
-                    layer.top,
-                    'Bold'
-                );
-                this.writeText(
-                    ctx,
-                    layer.text.text,
-                    layer.text.style.fontSize,
-                    layer.left,
-                    layer.top
-                );
             }
 
             if (
@@ -351,22 +307,6 @@ export default class rezka extends ParseModule {
                 object.country.length
             ) {
                 layer.text.text = object.country[0];
-
-                this.writeTitle(
-                    ctx,
-                    'Страна',
-                    27.66,
-                    65,
-                    layer.top - 10,
-                    'Bold'
-                );
-                this.writeText(
-                    ctx,
-                    layer.text.text,
-                    layer.text.style.fontSize,
-                    layer.left,
-                    layer.top - 10
-                );
             }
 
             if (
@@ -419,22 +359,6 @@ export default class rezka extends ParseModule {
 
             if (layer.name === '@producer' && object.director) {
                 layer.text.text = object.director;
-
-                this.writeTitle(
-                    ctx,
-                    'Режиссер',
-                    27.66,
-                    65,
-                    layer.top - 22,
-                    'Bold'
-                );
-                this.writeText(
-                    ctx,
-                    layer.text.text,
-                    layer.text.style.fontSize,
-                    layer.left,
-                    layer.top - 22
-                );
             }
 
             if (layer.name === '@rating' && object.rating)

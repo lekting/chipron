@@ -1,13 +1,13 @@
-import fs from 'fs';
+import fs from "fs";
 
-import os from 'os';
-import path from 'path';
-import { v1 } from 'uuid';
+import os from "os";
+import path from "path";
+import { v1 } from "uuid";
 
-import Puppeteer from 'puppeteer-extra';
-import StealthPlugin from 'puppeteer-extra-plugin-stealth';
-import { Browser } from 'puppeteer';
-import CFBypassResponse from './interfaces/CFBypassResponse';
+import Puppeteer from "puppeteer-extra";
+import StealthPlugin from "puppeteer-extra-plugin-stealth";
+import { Browser } from "puppeteer";
+import CFBypassResponse from "./interfaces/CFBypassResponse";
 
 export default class cf_bypass {
     constructor() {
@@ -17,29 +17,29 @@ export default class cf_bypass {
     private prepareBrowserProfile(userAgent: string) {
         const userDataDir = path.join(
             os.tmpdir(),
-            '/puppeteer_firefox_profile_' + v1()
+            "/puppeteer_firefox_profile_" + v1()
         );
         if (!fs.existsSync(userDataDir)) {
             fs.mkdirSync(userDataDir, { recursive: true });
         }
         const prefs = `user_pref("general.useragent.override", "${userAgent}");`;
-        fs.writeFile(path.join(userDataDir, 'prefs.js'), prefs, () => {});
+        fs.writeFile(path.join(userDataDir, "prefs.js"), prefs, () => {});
         return userDataDir;
     }
 
     getCookies(params: any): Promise<CFBypassResponse> {
         let puppeteerOptions: any = {
-            product: 'chrome',
+            product: "chrome",
             headless: true,
-            args: ['--no-sandbox'],
-            userDataDir: '',
+            args: ["--no-sandbox"],
+            userDataDir: "",
         };
 
         const startTimestamp = Date.now();
-        const reqUserAgent = params['userAgent'];
+        const reqUserAgent = params["userAgent"];
 
         if (reqUserAgent) {
-            puppeteerOptions['userDataDir'] =
+            puppeteerOptions["userDataDir"] =
                 this.prepareBrowserProfile(reqUserAgent);
         }
 
@@ -72,18 +72,18 @@ export default class cf_bypass {
     ) {
         const page = await browser.newPage();
         //const userAgent = await page.evaluate(() => navigator.userAgent);
-        const reqUrl = params['url'];
-        const reqMaxTimeout = params['maxTimeout'] || 60000;
-        const reqCookies = params['cookies'];
+        const reqUrl = params["url"];
+        const reqMaxTimeout = params["maxTimeout"] || 60000;
+        const reqCookies = params["cookies"];
 
         if (reqCookies) {
             await page.setCookie(...reqCookies);
         }
 
-        await page.goto(reqUrl, { waitUntil: 'domcontentloaded' });
+        await page.goto(reqUrl, { waitUntil: "domcontentloaded" });
 
         // detect cloudflare
-        const cloudflareRay = await page.$('.ray_id');
+        const cloudflareRay = await page.$(".ray_id");
         if (cloudflareRay) {
             while (Date.now() - startTimestamp < reqMaxTimeout) {
                 await page.waitForTimeout(1000);
@@ -91,12 +91,12 @@ export default class cf_bypass {
                 try {
                     // catch exception timeout in waitForNavigation
                     await page.waitForNavigation({
-                        waitUntil: 'domcontentloaded',
+                        waitUntil: "domcontentloaded",
                         timeout: 5000,
                     });
                 } catch (error) {}
 
-                const cloudflareRay = await page.$('.ray_id');
+                const cloudflareRay = await page.$(".ray_id");
                 if (!cloudflareRay) break;
             }
 
@@ -106,8 +106,8 @@ export default class cf_bypass {
 
             const html = await page.content();
             if (
-                html.includes('captcha-bypass') ||
-                html.includes('__cf_chl_captcha_tk__')
+                html.includes("captcha-bypass") ||
+                html.includes("__cf_chl_captcha_tk__")
             ) {
                 return;
             }
@@ -119,7 +119,7 @@ export default class cf_bypass {
 
         const endTimestamp = Date.now();
         const response: CFBypassResponse = {
-            status: 'ok',
+            status: "ok",
             startTimestamp: startTimestamp,
             endTimestamp: endTimestamp,
             solution: {
