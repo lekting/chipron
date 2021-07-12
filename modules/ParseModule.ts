@@ -9,8 +9,9 @@ import { createCanvas, loadImage, NodeCanvasRenderingContext2D } from "canvas";
 
 export default abstract class Module {
     name: string;
-    site: string[];
-    cfBypass: cf_bypass;
+
+    protected cfBypass: cf_bypass;
+    private site: string[];
 
     characters =
         "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -23,10 +24,6 @@ export default abstract class Module {
 
     getSite(): string[] {
         return this.site;
-    }
-
-    getConfig(): object {
-        return config;
     }
 
     abstract parseObjects(_: string): Promise<ParsedObject>;
@@ -99,18 +96,6 @@ export default abstract class Module {
         return { ctx, canvas };
     }
 
-    async convertPSDToJPG(psdFilePath: string): Promise<void> {
-        return new Promise((resolve) => {
-            let proc = spawn("magick", [
-                "convert",
-                `${psdFilePath}`,
-                psdFilePath.replace(".psd", ".jpg"),
-            ]);
-
-            proc.on("close", () => resolve());
-        });
-    }
-
     writeCopyright(ctx: NodeCanvasRenderingContext2D) {
         ctx.font = "25.53px AA American Captain";
 
@@ -128,14 +113,9 @@ export default abstract class Module {
         fontWeight: string = "Black"
     ) {
         if (fontWeight == "Black")
-            ctx.font = fontSize + "px Arial " + fontWeight;
+            ctx.font = `${fontSize}px Arial ${fontWeight}`;
         else
-            ctx.font =
-                "normal " +
-                fontWeight.toLowerCase() +
-                " " +
-                fontSize +
-                "px Arial";
+            ctx.font = `normal ${fontWeight.toLowerCase()} ${fontSize}px Arial`;
 
         ctx.fillStyle = "white";
         ctx.fillText(text, x, y - 5);
@@ -150,7 +130,7 @@ export default abstract class Module {
         y: number
     ) {
         fontSize += 4;
-        ctx.font = fontSize + "px Arial";
+        ctx.font = `${fontSize}px Arial`;
         ctx.fillStyle = "white";
         ctx.fillText(text, x, y - 5);
         ctx.restore();
@@ -184,8 +164,8 @@ export default abstract class Module {
         return result;
     }
 
-    connect(arr: any[], del: string = "#") {
-        if (!arr || !arr.length) return "";
+    connect(arr: string[], del: string = "#") {
+        if (!arr.length) return "";
 
         return arr
             .map((val) => {

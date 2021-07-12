@@ -20,7 +20,6 @@
     "canvas": "^2.8.0",
     "colors": "^1.4.0",
     "fs": "*",
-    "get-system-fonts": "^2.0.2",
     "inquirer": "^8.1.1",
     "mongodb": "^3.6.10",
     "node-telegram-bot-api": "^0.53.0",
