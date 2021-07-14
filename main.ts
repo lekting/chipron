@@ -22,8 +22,6 @@ import TelegramBot from "node-telegram-bot-api";
 import ParseModule from "./modules/ParseModule";
 import cf_bypass from "./cf-bypass";
 
-import { createCanvas, loadImage } from "canvas";
-
 const bot = new TelegramBot(config.telegramBotToken, {
     polling: true,
 });
@@ -34,14 +32,17 @@ const modules: ParseModule[] = [new rezka(cfBypass), new YummyAnime(cfBypass)];
 let working = false;
 let disabling = false;
 
+//Init telegram client with tdlib (not a bot)
 const tgClient = new Client(new TDLib(), {
     apiId: config.telegram.appId,
     apiHash: config.telegram.apiHash,
-    verbosityLevel: 0,
+    verbosityLevel: 2,
 });
 
+//Create temp folder for templ files (like exported jpg poster and videos)
 if (!fs.existsSync("./temp")) fs.mkdirSync("./temp");
 
+//Trying to connect to telegram server and auth
 (async () => {
     await tgClient.connect();
     await tgClient.login(() => ({
@@ -116,16 +117,19 @@ bot.on("message", async (message) => {
 
     working = true;
 
+    //Parsing sites
     let parsed = await module.parseObjects(message.text);
 
     let outText = module.getOutText(parsed);
 
+    //if we have urls - downloaded them
     if (parsed.movieLink && parsed.movieLink.length) {
         bot.sendMessage(
             message.chat.id,
             `Скачиваю ${parsed.movieLink.length > 1 ? "серии" : "фильм"}...`
         );
 
+        //Download a movie
         let video = await module.downloadMovie(parsed.movieLink);
 
         if (video) {
@@ -136,6 +140,7 @@ bot.on("message", async (message) => {
 
             parsed.tempVideoName = video;
 
+            //generating psd file and drawing with canvas a poster
             let templateName = await module.writePsd(parsed);
 
             bot.sendMessage(
@@ -145,6 +150,7 @@ bot.on("message", async (message) => {
                 } успешно скачан, высылаю в паблик`
             );
 
+            //sending poster(jpg, psd) and video to trash-channel
             await sendPost(video, templateName, outText, parsed.name, duration);
         }
     }
@@ -163,6 +169,7 @@ bot.on("message", async (message) => {
 
 function getVideoDuration(video: string): Promise<number> {
     return new Promise((resolve) => {
+        //trying to spawn ffprobe and get video duration (in sec)
         let proc = spawn("ffprobe", ["-show_format", `./temp/${video}.mp4`]);
 
         proc.stdout.on("data", async (data: Buffer) => {
@@ -207,47 +214,58 @@ async function sendPost(
     name: string,
     videoDuration: number
 ): Promise<any> {
-    tgClient.invoke({
-        _: "sendMessage",
-        chat_id: config.telegramTrashGroup,
-        input_message_content: {
-            _: "inputMessageDocument",
-            document: {
-                _: "inputFileLocal",
-                path: `./temp/${photo}.psd`,
-            },
-            caption: {
-                _: "formattedText",
-                text: name,
-            },
-        },
-    });
-    return tgClient.invoke({
-        _: "sendMessageAlbum",
-        chat_id: config.telegramTrashGroup,
-        input_message_contents: [
-            {
-                _: "inputMessageVideo",
-                video: {
+    //send psd
+    await tgClient
+        .invoke({
+            _: "sendMessage",
+            chat_id: config.telegramTrashGroup,
+            input_message_content: {
+                _: "inputMessageDocument",
+                document: {
                     _: "inputFileLocal",
-                    path: `./temp/${video}.mp4`,
+                    path: `./temp/${photo}.psd`,
                 },
                 caption: {
                     _: "formattedText",
-                    text: outText,
-                },
-                supports_streaming: true,
-                duration: videoDuration,
-            },
-            {
-                _: "inputMessagePhoto",
-                photo: {
-                    _: "inputFileLocal",
-                    path: `./temp/${photo}.jpg`,
+                    text: name,
                 },
             },
-        ],
-    });
+        })
+        .catch((err) => {
+            console.log(err);
+        });
+
+    //send poster(jpg) and video as album
+    return tgClient
+        .invoke({
+            _: "sendMessageAlbum",
+            chat_id: config.telegramTrashGroup,
+            input_message_contents: [
+                {
+                    _: "inputMessageVideo",
+                    video: {
+                        _: "inputFileLocal",
+                        path: `./temp/${video}.mp4`,
+                    },
+                    caption: {
+                        _: "formattedText",
+                        text: outText,
+                    },
+                    supports_streaming: true,
+                    duration: videoDuration,
+                },
+                {
+                    _: "inputMessagePhoto",
+                    photo: {
+                        _: "inputFileLocal",
+                        path: `./temp/${photo}.jpg`,
+                    },
+                },
+            ],
+        })
+        .catch((err) => {
+            console.log(err);
+        });
 }
 
 function log(text: string) {
@@ -261,6 +279,7 @@ function randomNumber(min: number, max: number) {
     return Math.floor(Math.random() * (max - min) + min);
 }
 
+//Mini-console for some commands
 function sendPrompt(/* mc: mongoWorker */) {
     inquirer
         .prompt({

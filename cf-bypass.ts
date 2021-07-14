@@ -9,6 +9,7 @@ import StealthPlugin from "puppeteer-extra-plugin-stealth";
 import { Browser } from "puppeteer";
 import CFBypassResponse from "./interfaces/CFBypassResponse";
 
+//cloudflare bypass base on a browser (chromium, puppeteer)
 export default class cf_bypass {
     constructor() {
         Puppeteer.use(StealthPlugin());
@@ -27,6 +28,8 @@ export default class cf_bypass {
         return userDataDir;
     }
 
+    //TODO: rename
+    //parse site
     getCookies(params: any): Promise<CFBypassResponse> {
         let puppeteerOptions: any = {
             product: "chrome",
@@ -65,7 +68,9 @@ export default class cf_bypass {
         });
     }
 
-    async resolveCallenge(
+    //trying to bypass cloudflare (trying to find ray_id on a "pls wait while we verifying" page
+    //if not found - we successfully bypassed)
+    private async resolveCallenge(
         params: any,
         browser: Browser,
         startTimestamp: number
@@ -113,19 +118,14 @@ export default class cf_bypass {
             }
         }
 
-        const url = page.url();
-        const cookies = await page.cookies();
-        const html = await page.content();
-
-        const endTimestamp = Date.now();
         const response: CFBypassResponse = {
             status: "ok",
             startTimestamp: startTimestamp,
-            endTimestamp: endTimestamp,
+            endTimestamp: Date.now(),
             solution: {
-                url: url,
-                response: html,
-                cookies: cookies,
+                url: page.url(),
+                response: await page.content(), //html of page
+                cookies: await page.cookies(),
             },
         };
 
