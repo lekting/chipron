@@ -1,28 +1,28 @@
-process.env.NTBA_FIX_319 = '1'; //fix node-telegram-bot-api promise cancelation
+process.env.NTBA_FIX_319 = "1"; //fix node-telegram-bot-api promise cancelation
 
-import config from './config';
+import config from "./config";
 
-import colors from 'colors/safe';
+import colors from "colors/safe";
 //import mongoWorker from './mongoWorker';
 
-import rezka from './modules/rezka';
+import rezka from "./modules/rezka";
 
-import YummyAnime from './modules/yummyanime';
+import YummyAnime from "./modules/yummyanime";
 
-import * as fs from 'fs';
-import 'ag-psd/initialize-canvas.js';
+import * as fs from "fs";
+import "ag-psd/initialize-canvas.js";
 
-import { Client } from 'tdl';
-import { TDLib } from 'tdl-tdlib-addon';
-import { spawn } from 'child_process';
+import { Client } from "tdl";
+import { TDLib } from "tdl-tdlib-addon";
+import { spawn } from "child_process";
 
-import inquirer from 'inquirer';
+import inquirer from "inquirer";
 //const MongoClient = require('mongodb').MongoClient;
-import TelegramBot from 'node-telegram-bot-api';
-import ParseModule from './modules/ParseModule';
-import cf_bypass from './cf-bypass';
+import TelegramBot from "node-telegram-bot-api";
+import ParseModule from "./modules/ParseModule";
+import cf_bypass from "./cf-bypass";
 
-import { createCanvas, loadImage } from 'canvas';
+import { createCanvas, loadImage } from "canvas";
 
 const bot = new TelegramBot(config.telegramBotToken, {
     polling: true,
@@ -40,22 +40,22 @@ const tgClient = new Client(new TDLib(), {
     verbosityLevel: 0,
 });
 
-if (!fs.existsSync('./temp')) fs.mkdirSync('./temp');
+if (!fs.existsSync("./temp")) fs.mkdirSync("./temp");
 
 (async () => {
     await tgClient.connect();
     await tgClient.login(() => ({
         getPhoneNumber: (retry) =>
             retry
-                ? Promise.reject('Invalid phone number')
+                ? Promise.reject("Invalid phone number")
                 : Promise.resolve(config.telegram.phone),
         getAuthCode: (retry) =>
             retry
-                ? Promise.reject('Invalid auth code')
+                ? Promise.reject("Invalid auth code")
                 : Promise.resolve(config.telegram.code),
         getPassword: (_, retry) =>
             retry
-                ? Promise.reject('Invalid password')
+                ? Promise.reject("Invalid password")
                 : Promise.resolve(config.telegram.password),
         getName: () =>
             Promise.resolve({
@@ -64,7 +64,7 @@ if (!fs.existsSync('./temp')) fs.mkdirSync('./temp');
             }),
     }));
 
-    tgClient.on('error', console.error);
+    tgClient.on("error", console.error);
     sendPrompt();
 })();
 
@@ -74,18 +74,18 @@ if (!fs.existsSync('./temp')) fs.mkdirSync('./temp');
 
 //let mc = new mongoWorker('films', client);
 
-bot.on('message', async (message) => {
+bot.on("message", async (message) => {
     if (disabling) return;
-    if (!message || !message.chat) return console.log('NOONOONOON');
+    if (!message || !message.chat) return console.log("NOONOONOON");
 
     if (!config.telegramAdmins.includes(message.chat.id)) {
-        return bot.sendMessage(message.chat.id, 'Ты кто блять!?');
+        return bot.sendMessage(message.chat.id, "Ты кто блять!?");
     }
 
     if (working) {
         return bot.sendMessage(
             message.chat.id,
-            'Да подожди ты блять, работаю...'
+            "Да подожди ты блять, работаю..."
         );
     }
 
@@ -111,7 +111,7 @@ bot.on('message', async (message) => {
 
     bot.sendMessage(
         message.chat.id,
-        'Начинаю пахать, я же блять раб, ну да...'
+        "Начинаю пахать, я же блять раб, ну да..."
     );
 
     working = true;
@@ -123,7 +123,7 @@ bot.on('message', async (message) => {
     if (parsed.movieLink && parsed.movieLink.length) {
         bot.sendMessage(
             message.chat.id,
-            `Скачиваю ${parsed.movieLink.length > 1 ? 'серии' : 'фильм'}...`
+            `Скачиваю ${parsed.movieLink.length > 1 ? "серии" : "фильм"}...`
         );
 
         let video = await module.downloadMovie(parsed.movieLink);
@@ -141,7 +141,7 @@ bot.on('message', async (message) => {
             bot.sendMessage(
                 message.chat.id,
                 `${
-                    parsed.movieLink.length > 1 ? 'Аниме' : 'Фильм'
+                    parsed.movieLink.length > 1 ? "Аниме" : "Фильм"
                 } успешно скачан, высылаю в паблик`
             );
 
@@ -163,11 +163,11 @@ bot.on('message', async (message) => {
 
 function getVideoDuration(video: string): Promise<number> {
     return new Promise((resolve) => {
-        let proc = spawn('ffprobe', ['-show_format', `./temp/${video}.mp4`]);
+        let proc = spawn("ffprobe", ["-show_format", `./temp/${video}.mp4`]);
 
-        proc.stdout.on('data', async (data: Buffer) => {
+        proc.stdout.on("data", async (data: Buffer) => {
             let msg = data.toString();
-            if (!msg.includes('duration=')) return;
+            if (!msg.includes("duration=")) return;
 
             let videoDuration = msg.match(/duration=(.*)/);
 
@@ -182,21 +182,21 @@ function generateThumbnail(
     i: number = 1
 ): Promise<void> {
     return new Promise((resolve) => {
-        let proc = spawn('ffmpeg', [
-            '-y',
-            '-hide_banner',
-            '-i',
+        let proc = spawn("ffmpeg", [
+            "-y",
+            "-hide_banner",
+            "-i",
             `./temp/${video}.mp4`,
-            '-ss',
+            "-ss",
             seconds.toString(),
-            '-s',
-            '250x164',
-            '-vframes',
-            '1',
+            "-s",
+            "250x164",
+            "-vframes",
+            "1",
             `./temp/${video}_${i}.jpg`,
         ]);
 
-        proc.on('close', () => resolve());
+        proc.on("close", () => resolve());
     });
 }
 
@@ -208,41 +208,41 @@ async function sendPost(
     videoDuration: number
 ): Promise<any> {
     tgClient.invoke({
-        _: 'sendMessage',
+        _: "sendMessage",
         chat_id: config.telegramTrashGroup,
         input_message_content: {
-            _: 'inputMessageDocument',
+            _: "inputMessageDocument",
             document: {
-                _: 'inputFileLocal',
+                _: "inputFileLocal",
                 path: `./temp/${photo}.psd`,
             },
             caption: {
-                _: 'formattedText',
+                _: "formattedText",
                 text: name,
             },
         },
     });
     return tgClient.invoke({
-        _: 'sendMessageAlbum',
+        _: "sendMessageAlbum",
         chat_id: config.telegramTrashGroup,
         input_message_contents: [
             {
-                _: 'inputMessageVideo',
+                _: "inputMessageVideo",
                 video: {
-                    _: 'inputFileLocal',
+                    _: "inputFileLocal",
                     path: `./temp/${video}.mp4`,
                 },
                 caption: {
-                    _: 'formattedText',
+                    _: "formattedText",
                     text: outText,
                 },
                 supports_streaming: true,
                 duration: videoDuration,
             },
             {
-                _: 'inputMessagePhoto',
+                _: "inputMessagePhoto",
                 photo: {
-                    _: 'inputFileLocal',
+                    _: "inputFileLocal",
                     path: `./temp/${photo}.jpg`,
                 },
             },
@@ -252,7 +252,7 @@ async function sendPost(
 
 function log(text: string) {
     console.log(
-        colors.bold(colors.green('Chipron | ')) +
+        colors.bold(colors.green("Chipron | ")) +
             colors.bold(colors.white(text))
     );
 }
@@ -264,29 +264,29 @@ function randomNumber(min: number, max: number) {
 function sendPrompt(/* mc: mongoWorker */) {
     inquirer
         .prompt({
-            type: 'input',
-            name: 'command',
-            message: 'Команда:',
+            type: "input",
+            name: "command",
+            message: "Команда:",
         })
         .then(async (command: any) => {
             if (disabling) return;
 
             if (command.command) {
-                if (command.command === 'exit') {
+                if (command.command === "exit") {
                     disabling = true;
-                    log('Сворачиваемся пацаны');
+                    log("Сворачиваемся пацаны");
 
                     //await mc.close();
                     process.exit();
                 } else {
-                    if (command.command !== 'help') {
-                        log('Сорь, команду не нашёл. Вот тебе список:');
-                        command.command = 'help';
+                    if (command.command !== "help") {
+                        log("Сорь, команду не нашёл. Вот тебе список:");
+                        command.command = "help";
                     }
                 }
 
-                if (command.command === 'help') {
-                    log('exit - выйти в окно (выключиться)');
+                if (command.command === "help") {
+                    log("exit - выйти в окно (выключиться)");
                 }
             }
 
@@ -295,7 +295,7 @@ function sendPrompt(/* mc: mongoWorker */) {
 }
 
 function getWorkingModule(url: string): ParseModule {
-    if (!(url.startsWith('https://') || url.startsWith('http://'))) return null;
+    if (!(url.startsWith("https://") || url.startsWith("http://"))) return null;
 
     let link = url.match(/\/\/(.*?)\//)[1];
 
