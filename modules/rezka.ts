@@ -263,7 +263,7 @@ export default class rezka extends ParseModule {
 
         let texts = psd.children[2].children;
 
-        let { ctx, canvas } = await this.renderDefaultCanvas(object);
+        let { ctx, canvas, height } = await this.renderDefaultCanvas(object);
         for (let layer of texts) {
             //Drawing image
             if (layer.name == "Layer 113" && object.poster) {
@@ -316,20 +316,14 @@ export default class rezka extends ParseModule {
             ) {
                 layer.text.text = `${object.actors[0]} ${object.actors[1]}`;
 
-                this.writeTitle(
-                    ctx,
-                    "В главных",
-                    27.66,
-                    65,
-                    layer.top - 33,
-                    "Bold"
-                );
+                height += 44;
+                this.writeTitle(ctx, "В главных", 27.66, 55, height, "Bold");
                 this.writeText(
                     ctx,
                     layer.text.text,
                     layer.text.style.fontSize,
-                    layer.left,
-                    layer.top - 33
+                    layer.left - 10,
+                    height
                 );
             }
 
@@ -340,20 +334,14 @@ export default class rezka extends ParseModule {
             ) {
                 layer.text.text = `${object.actors[2]} ${object.actors[3]}`;
 
-                this.writeTitle(
-                    ctx,
-                    "ролях",
-                    27.66,
-                    65,
-                    layer.top - 40,
-                    "Bold"
-                );
+                height += 24;
+                this.writeTitle(ctx, "ролях", 27.66, 55, height, "Bold");
                 this.writeText(
                     ctx,
                     layer.text.text,
                     layer.text.style.fontSize,
-                    layer.left,
-                    layer.top - 40
+                    layer.left - 10,
+                    height
                 );
             }
 

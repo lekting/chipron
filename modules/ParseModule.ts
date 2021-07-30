@@ -42,13 +42,13 @@ export default abstract class Module {
         ctx.drawImage(await loadImage("./assets/1.jpg"), 0, 0, 1000, 600);
 
         //Render line under title
-        ctx.drawImage(await loadImage("./assets/2.png"), 64, 128);
+        ctx.drawImage(await loadImage("./assets/2.png"), 55, 105);
 
         if (object.tempVideoName) {
             //Render thumbnails
             ctx.drawImage(
                 await loadImage(`./temp/${object.tempVideoName}_1.jpg`),
-                65,
+                55,
                 376
             );
             ctx.drawImage(
@@ -67,6 +67,7 @@ export default abstract class Module {
 
         ctx.setTransform(1, 0, 0, 1.2, 0, 0);
 
+        let height = 80;
         //Write title of movie
         this.writeTitle(
             ctx,
@@ -74,13 +75,13 @@ export default abstract class Module {
                 ? object.name.slice(0, 31) + "..."
                 : object.name,
             26.66,
-            65,
-            85
+            55,
+            height
         );
-        let height = 174;
+        height += 55;
         if (object.year) {
             //Write date title
-            this.writeTitle(ctx, "Дата выхода", 27.66, 65, height, "Bold");
+            this.writeTitle(ctx, "Дата выхода", 27.66, 55, height, "Bold");
             //Write date
             this.writeText(ctx, object.year, 25.73, 298, height);
         }
@@ -88,7 +89,7 @@ export default abstract class Module {
         if (object.country && object.country.length) {
             //Write country title
             height += 44;
-            this.writeTitle(ctx, "Страна", 27.66, 65, height, "Bold");
+            this.writeTitle(ctx, "Страна", 27.66, 55, height, "Bold");
             //Write country
             this.writeText(ctx, object.country[0], 25.73, 298, height);
         }
@@ -96,7 +97,7 @@ export default abstract class Module {
         if (object.director) {
             height += 44;
             //Write director title
-            this.writeTitle(ctx, "Режиссёр", 27.66, 65, height, "Bold");
+            this.writeTitle(ctx, "Режиссёр", 27.66, 55, height, "Bold");
             //Write director
             this.writeText(ctx, object.director, 25.73, 298, height);
         }
@@ -110,7 +111,7 @@ export default abstract class Module {
 
         ctx.setTransform(saved);
 
-        return { ctx, canvas };
+        return { ctx, canvas, height };
     }
 
     writeCopyright(ctx: NodeCanvasRenderingContext2D) {

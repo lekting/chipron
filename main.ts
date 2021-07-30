@@ -21,6 +21,8 @@ import inquirer from "inquirer";
 import TelegramBot from "node-telegram-bot-api";
 import ParseModule from "./modules/ParseModule";
 import cf_bypass from "./cf-bypass";
+import { message, messages } from "tdlib-types";
+import EventEmitter from "events";
 
 const bot = new TelegramBot(config.telegramBotToken, {
     polling: true,
@@ -28,6 +30,7 @@ const bot = new TelegramBot(config.telegramBotToken, {
 
 const cfBypass = new cf_bypass();
 const modules: ParseModule[] = [new rezka(cfBypass), new YummyAnime(cfBypass)];
+const events = new EventEmitter();
 
 let working = false;
 let disabling = false;
@@ -36,7 +39,7 @@ let disabling = false;
 const tgClient = new Client(new TDLib(), {
     apiId: config.telegram.appId,
     apiHash: config.telegram.apiHash,
-    verbosityLevel: 2,
+    verbosityLevel: 0,
 });
 
 //Create temp folder for templ files (like exported jpg poster and videos)
@@ -65,7 +68,15 @@ if (!fs.existsSync("./temp")) fs.mkdirSync("./temp");
             }),
     }));
 
-    tgClient.on("error", console.error);
+    //tgClient.on("error", console.error);
+    tgClient.on("update", (val) => {
+        if (
+            val._ == "updateChatLastMessage" &&
+            val.last_message.chat_id == config.telegramTrashGroup
+        ) {
+            events.emit("newMessage", val.last_message);
+        }
+    });
     sendPrompt();
 })();
 
@@ -207,6 +218,32 @@ function generateThumbnail(
     });
 }
 
+async function awaitTelegramMessage(
+    message: Promise<void | message | messages>
+): Promise<void> {
+    let anyMessage = await (message as any);
+    let msg: message[] = [];
+
+    if ((anyMessage as messages).messages)
+        msg.push(...(anyMessage as messages).messages);
+    else msg.push(anyMessage as message);
+
+    return new Promise((resolve) => {
+        let isNeededMessage = (message: message) => {
+            return msg.some((msg) => message.content._ == msg.content._);
+        };
+
+        let checkLoad = (msg: message) => {
+            if (isNeededMessage(msg)) {
+                events.removeListener("newMessage", checkLoad);
+                resolve();
+            }
+        };
+
+        events.on("newMessage", checkLoad);
+    });
+}
+
 async function sendPost(
     video: string,
     photo: string,
@@ -215,57 +252,79 @@ async function sendPost(
     videoDuration: number
 ): Promise<any> {
     //send psd
-    await tgClient
-        .invoke({
-            _: "sendMessage",
-            chat_id: config.telegramTrashGroup,
-            input_message_content: {
-                _: "inputMessageDocument",
-                document: {
-                    _: "inputFileLocal",
-                    path: `./temp/${photo}.psd`,
-                },
-                caption: {
-                    _: "formattedText",
-                    text: name,
-                },
-            },
-        })
-        .catch((err) => {
-            console.log(err);
-        });
-
-    //send poster(jpg) and video as album
-    return tgClient
-        .invoke({
-            _: "sendMessageAlbum",
-            chat_id: config.telegramTrashGroup,
-            input_message_contents: [
-                {
-                    _: "inputMessageVideo",
-                    video: {
+    await awaitTelegramMessage(
+        tgClient
+            .invoke({
+                _: "sendMessage",
+                chat_id: config.telegramTrashGroup,
+                input_message_content: {
+                    _: "inputMessageDocument",
+                    document: {
                         _: "inputFileLocal",
-                        path: `./temp/${video}.mp4`,
+                        path: `./temp/${photo}.psd`,
                     },
                     caption: {
                         _: "formattedText",
+                        text: name,
+                    },
+                },
+            })
+            .catch((err) => {
+                console.log(err);
+            })
+    );
+
+    //send poster(jpg) and video as album
+    await awaitTelegramMessage(
+        tgClient
+            .invoke({
+                _: "sendMessageAlbum",
+                chat_id: config.telegramTrashGroup,
+                input_message_contents: [
+                    {
+                        _: "inputMessageVideo",
+                        video: {
+                            _: "inputFileLocal",
+                            path: `./temp/${video}.mp4`,
+                        },
+                        caption: {
+                            _: "formattedText",
+                            text: name,
+                        },
+                        supports_streaming: true,
+                        duration: videoDuration,
+                    },
+                    {
+                        _: "inputMessagePhoto",
+                        photo: {
+                            _: "inputFileLocal",
+                            path: `./temp/${photo}.jpg`,
+                        },
+                    },
+                ],
+            })
+            .catch((err) => {
+                console.log(err);
+            })
+    );
+
+    return awaitTelegramMessage(
+        tgClient
+            .invoke({
+                _: "sendMessage",
+                chat_id: config.telegramTrashGroup,
+                input_message_content: {
+                    _: "inputMessageText",
+                    text: {
+                        _: "formattedText",
                         text: outText,
                     },
-                    supports_streaming: true,
-                    duration: videoDuration,
                 },
-                {
-                    _: "inputMessagePhoto",
-                    photo: {
-                        _: "inputFileLocal",
-                        path: `./temp/${photo}.jpg`,
-                    },
-                },
-            ],
-        })
-        .catch((err) => {
-            console.log(err);
-        });
+            })
+            .catch((err) => {
+                console.log(err);
+            })
+    );
 }
 
 function log(text: string) {
