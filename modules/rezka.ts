@@ -84,7 +84,7 @@ export default class rezka extends ParseModule {
 
     downloadMovie(url: string[]): Promise<string> {
         return new Promise(async (resolve) => {
-            let randName = this.makeid(7);
+            const randName = this.makeid(7);
             await this.runFFMPEG([
                 "-hwaccel",
                 "cuvid",
@@ -118,7 +118,7 @@ export default class rezka extends ParseModule {
     }
 
     getOutText(content: ParsedObject): string {
-        let text = [];
+        const text = [];
         text.push(
             `🎬 **${content.name}**`,
             `🎭 **Жанры:** ${this.connect(content.genres, "#")}`,
@@ -154,13 +154,13 @@ export default class rezka extends ParseModule {
                 return reject(ex);
             }
 
-            let data: ParsedObject = {};
+            const data: ParsedObject = {};
 
             let i = 0;
             data.type = 0;
 
             data.url = url;
-            for (let element of html) {
+            for (const element of html) {
                 if (element.includes('<h1 itemprop="name">')) {
                     data.name = element.match(/<h1 itemprop="name">(.+)</)[1];
                 }
@@ -261,7 +261,7 @@ export default class rezka extends ParseModule {
         // read only document structure
         const psd = readPsd(buffer);
 
-        let texts = psd.children[2].children;
+        const texts = psd.children[2].children;
 
         let { ctx, canvas, height } = await this.renderDefaultCanvas(object);
         for (let layer of texts) {
@@ -355,7 +355,7 @@ export default class rezka extends ParseModule {
 
         buffer = writePsdBuffer(psd, { invalidateTextLayers: true });
 
-        let randName = this.makeid(7);
+        const randName = this.makeid(7);
         fs.writeFileSync(`./temp/${randName}.psd`, buffer);
         fs.writeFileSync(`./temp/${randName}.jpg`, (canvas as any).toBuffer());
 

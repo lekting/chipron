@@ -112,7 +112,7 @@ bot.on("message", async (message) => {
         return;
     }*/
 
-    let module = getWorkingModule(message.text);
+    const module = getWorkingModule(message.text);
 
     if (!module) {
         return bot.sendMessage(
@@ -129,9 +129,9 @@ bot.on("message", async (message) => {
     working = true;
 
     //Parsing sites
-    let parsed = await module.parseObjects(message.text);
+    const parsed = await module.parseObjects(message.text);
 
-    let outText = module.getOutText(parsed);
+    const outText = module.getOutText(parsed);
 
     //if we have urls - downloaded them
     if (parsed.movieLink && parsed.movieLink.length) {
@@ -141,10 +141,10 @@ bot.on("message", async (message) => {
         );
 
         //Download a movie
-        let video = await module.downloadMovie(parsed.movieLink);
+        const video = await module.downloadMovie(parsed.movieLink);
 
         if (video) {
-            let duration = await getVideoDuration(video);
+            const duration = await getVideoDuration(video);
 
             await generateThumbnail(video, randomNumber(5, duration));
             await generateThumbnail(video, randomNumber(5, duration), 2);
@@ -152,7 +152,7 @@ bot.on("message", async (message) => {
             parsed.tempVideoName = video;
 
             //generating psd file and drawing with canvas a poster
-            let templateName = await module.writePsd(parsed);
+            const templateName = await module.writePsd(parsed);
 
             bot.sendMessage(
                 message.chat.id,
@@ -186,13 +186,13 @@ bot.on("message", async (message) => {
 function getVideoDuration(video: string): Promise<number> {
     return new Promise((resolve) => {
         //trying to spawn ffprobe and get video duration (in sec)
-        let proc = spawn("ffprobe", ["-show_format", `./temp/${video}.mp4`]);
+        const proc = spawn("ffprobe", ["-show_format", `./temp/${video}.mp4`]);
 
         proc.stdout.on("data", async (data: Buffer) => {
-            let msg = data.toString();
+            const msg = data.toString();
             if (!msg.includes("duration=")) return;
 
-            let videoDuration = msg.match(/duration=(.*)/);
+            const videoDuration = msg.match(/duration=(.*)/);
 
             resolve(parseInt(videoDuration[1]));
         });
@@ -205,7 +205,7 @@ function generateThumbnail(
     i: number = 1
 ): Promise<void> {
     return new Promise((resolve) => {
-        let proc = spawn("ffmpeg", [
+        const proc = spawn("ffmpeg", [
             "-y",
             "-hide_banner",
             "-i",
@@ -226,19 +226,19 @@ function generateThumbnail(
 async function awaitTelegramMessage(
     message: Promise<void | message | messages>
 ): Promise<void> {
-    let anyMessage = await (message as any);
-    let msg: message[] = [];
+    const anyMessage = await (message as any);
+    const msg: message[] = [];
 
     if ((anyMessage as messages).messages)
         msg.push(...(anyMessage as messages).messages);
     else msg.push(anyMessage as message);
 
     return new Promise((resolve) => {
-        let isNeededMessage = (message: message) => {
+        const isNeededMessage = (message: message) => {
             return msg.some((msg) => message.content._ == msg.content._);
         };
 
-        let checkLoad = (msg: message) => {
+        const checkLoad = (msg: message) => {
             if (isNeededMessage(msg)) {
                 events.removeListener("newMessage", checkLoad);
                 resolve();
@@ -351,7 +351,7 @@ function sendPrompt(/* mc: mongoWorker */) {
             name: "command",
             message: "Команда:",
         })
-        .then(async (command: any) => {
+        .then(async (command) => {
             if (disabling) return;
 
             if (command.command) {
@@ -380,7 +380,7 @@ function sendPrompt(/* mc: mongoWorker */) {
 function getWorkingModule(url: string): ParseModule {
     if (!(url.startsWith("https://") || url.startsWith("http://"))) return null;
 
-    let link = url.match(/\/\/(.*?)\//)[1];
+    const link = url.match(/\/\/(.*?)\//)[1];
 
     for (let i = 0; i < modules.length; i++)
         if (modules[i].getSite().includes(link)) return modules[i];

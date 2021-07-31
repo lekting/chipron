@@ -31,7 +31,7 @@ export default class cf_bypass {
     //TODO: rename
     //parse site
     getCookies(params: any): Promise<CFBypassResponse> {
-        let puppeteerOptions: any = {
+        const puppeteerOptions: any = {
             product: "chrome",
             headless: true,
             args: ["--no-sandbox"],

@@ -7,7 +7,7 @@ import { createCanvas, loadImage } from "canvas";
 import ParsedObject from "../interfaces/IParseObject";
 
 export default class YummyAnime extends ParseModule {
-    allowedTranslators = [
+    private allowedTranslators = [
         "AniLibria",
         "AniDUB",
         "SHIZA Project",
@@ -34,7 +34,7 @@ export default class YummyAnime extends ParseModule {
     }
 
     getOutText(content: ParsedObject): string {
-        let text = [];
+        const text = [];
         text.push(
             `🎬 **${content.name}**`,
             `🎭 **Жанры:** ${this.connect(content.genres, "#")}`,
@@ -55,7 +55,7 @@ export default class YummyAnime extends ParseModule {
             let html: string[];
 
             try {
-                let data = await this.cfBypass.getCookies({
+                const data = await this.cfBypass.getCookies({
                     url: url,
                     userAgent:
                         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.97 Safari/537.36",
@@ -70,7 +70,7 @@ export default class YummyAnime extends ParseModule {
                 return reject(ex);
             }
 
-            let data: ParsedObject = {};
+            const data: ParsedObject = {};
 
             data.type = 0;
 
@@ -175,7 +175,7 @@ export default class YummyAnime extends ParseModule {
     }
 
     private isPlayer(element: string) {
-        for (let dub of this.allowedTranslators)
+        for (const dub of this.allowedTranslators)
             if (element.includes(`Озвучка ${dub}`)) return dub;
 
         return null;
@@ -184,8 +184,8 @@ export default class YummyAnime extends ParseModule {
     //Download text TS segment
     private downloadNext(url: string): Promise<string> {
         return new Promise(async (resolve) => {
-            let downloadLink = await this.fuckKodik(url);
-            let randName = this.makeid(7);
+            const downloadLink = await this.fuckKodik(url),
+                randName = this.makeid(7);
 
             await this.runFFMPEG([
                 "-i",
@@ -208,9 +208,9 @@ export default class YummyAnime extends ParseModule {
     //Concat all segments into one mp4 file
     private concat(segments: string[]) {
         return new Promise(async (resolve) => {
-            let randName = this.makeid(7);
+            const randName = this.makeid(7);
 
-            let concateFileName = this.makeid(7);
+            const concateFileName = this.makeid(7);
 
             fs.writeFileSync(
                 `./temp/${concateFileName}.txt`,
@@ -242,15 +242,17 @@ export default class YummyAnime extends ParseModule {
 
     downloadMovie(url: string[]): Promise<string> {
         return new Promise(async (resolve) => {
-            let segments = [];
-            for (let link of url) segments.push(await this.downloadNext(link));
+            const segments = [];
+            for (const link of url)
+                segments.push(await this.downloadNext(link));
 
-            let concated = await this.concat(segments);
+            const concated = await this.concat(segments);
 
             //Delete all downloadeg segments cuz we already concated
-            for (let segment of segments) fs.unlinkSync(`./temp/${segment}.ts`);
+            for (const segment of segments)
+                fs.unlinkSync(`./temp/${segment}.ts`);
 
-            let randName = this.makeid(7);
+            const randName = this.makeid(7);
 
             await this.runFFMPEG([
                 "-hwaccel",
@@ -295,10 +297,10 @@ export default class YummyAnime extends ParseModule {
                     return resolve("");
                 }
 
-                let html = body.split(/\r?\n/);
+                const html = body.split(/\r?\n/);
 
                 for (let i = 0; i < html.length; i++) {
-                    let elem = html[i];
+                    const elem = html[i];
                     if (elem.includes("iframe.src")) {
                         let link = elem.match(/iframe.src = "(.+)";/)[1];
                         let splitted = link.split("/");
@@ -359,17 +361,17 @@ export default class YummyAnime extends ParseModule {
         // read only document structure
         const psd = readPsd(buffer);
 
-        let texts = psd.children[2].children;
+        const texts = psd.children[2].children;
 
         let { ctx, canvas, height } = await this.renderDefaultCanvas(object);
 
-        if(object.dubber) {
+        if (object.dubber) {
             height += 44;
             this.writeTitle(ctx, "Озвучка", 27.66, 55, height, "Bold");
             this.writeText(ctx, object.dubber, 25.73, 288, height);
         }
 
-        for (let layer of texts) {
+        for (const layer of texts) {
             //Drawing image
             if (layer.name == "Layer 113" && object.poster) {
                 //TODO: if no poster - replace by ?
@@ -420,7 +422,7 @@ export default class YummyAnime extends ParseModule {
 
         buffer = writePsdBuffer(psd, { invalidateTextLayers: true });
 
-        let randName = this.makeid(7);
+        const randName = this.makeid(7);
         fs.writeFileSync(`./temp/${randName}.psd`, buffer);
         fs.writeFileSync(`./temp/${randName}.jpg`, (canvas as any).toBuffer());
 

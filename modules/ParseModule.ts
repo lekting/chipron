@@ -7,12 +7,12 @@ import ParsedObject from "../interfaces/IParseObject";
 import { createCanvas, loadImage, NodeCanvasRenderingContext2D } from "canvas";
 
 export default abstract class Module {
-    name: string;
+    public name: string;
 
     protected cfBypass: cf_bypass;
     private site: string[];
 
-    characters =
+    private characters =
         "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
     constructor(name: string, site: string[], cfBypass: cf_bypass) {
@@ -103,9 +103,9 @@ export default abstract class Module {
         }
 
         await this.downloadPosterTemp(object.poster);
-        let image = await loadImage("./temp/temp.jpg");
+        const image = await loadImage("./temp/temp.jpg");
 
-        let saved = ctx.getTransform();
+        const saved = ctx.getTransform();
         ctx.resetTransform();
         ctx.drawImage(image, 607, 61, 338, 479);
 
@@ -171,7 +171,7 @@ export default abstract class Module {
 
     makeid(length: number) {
         let result = "";
-        let charactersLength = this.characters.length;
+        const charactersLength = this.characters.length;
 
         for (let i = 0; i < length; i++) {
             result += this.characters.charAt(
@@ -194,7 +194,7 @@ export default abstract class Module {
 
     runFFMPEG(args: string[], allLog?: boolean): Promise<void> {
         return new Promise((resolve) => {
-            let proc = spawn("ffmpeg", ["-y", "-hide_banner", ...args]);
+            const proc = spawn("ffmpeg", ["-y", "-hide_banner", ...args]);
 
             proc.stderr.setEncoding("utf8");
             proc.stderr.on("data", (data: string) => {
