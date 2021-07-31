@@ -3,7 +3,6 @@ process.env.NTBA_FIX_319 = "1"; //fix node-telegram-bot-api promise cancelation
 import config from "./config";
 
 import colors from "colors/safe";
-//import mongoWorker from './mongoWorker';
 
 import rezka from "./modules/rezka";
 
@@ -17,7 +16,6 @@ import { TDLib } from "tdl-tdlib-addon";
 import { spawn } from "child_process";
 
 import inquirer from "inquirer";
-//const MongoClient = require('mongodb').MongoClient;
 import TelegramBot from "node-telegram-bot-api";
 import ParseModule from "./modules/ParseModule";
 import cf_bypass from "./cf-bypass";
@@ -80,12 +78,6 @@ if (!fs.existsSync("./temp")) fs.mkdirSync("./temp");
     sendPrompt();
 })();
 
-//mongoClient = connectDB(),
-
-//mongoClient.then(async (client) => {
-
-//let mc = new mongoWorker('films', client);
-
 bot.on("message", async (message) => {
     if (disabling) return;
     if (!message || !message.chat) return console.log("NOONOONOON");
@@ -100,17 +92,6 @@ bot.on("message", async (message) => {
             "Да подожди ты блять, работаю..."
         );
     }
-
-    /*
-    let finded = await mc.findSomeOne('films', { url: message.text }, { url: 1 });
-
-    if (finded.length > 0) {
-        bot.sendMessage({
-            chat_id: message.chat.id,
-            text: 'Ты чё, дебил? Ты уже кидал такую ссылку.'
-        });
-        return;
-    }*/
 
     const module = getWorkingModule(message.text);
 
@@ -175,13 +156,6 @@ bot.on("message", async (message) => {
 
     working = false;
 });
-/* }).catch(error => {
-    bot.sendMessage({
-        chat_id: config.telegramAdmins[0],
-        text: 'MongoDB плюнул в ебло ошибку, чекни'
-    });
-    console.log(error);
-}); */
 
 function getVideoDuration(video: string): Promise<number> {
     return new Promise((resolve) => {
@@ -387,17 +361,3 @@ function getWorkingModule(url: string): ParseModule {
 
     return null;
 }
-
-/*function connectDB(): Promise<any> {
-    return new Promise((resolve, reject) => {
-        MongoClient.connect('mongodb://127.0.0.1:27017', { connectTimeoutMS: 5000, useUnifiedTopology: true, useNewUrlParser: true }, (err: any, client: any) => {
-
-            if (err) {
-                reject(err);
-                return;
-            }
-
-            resolve(client);
-        });
-    });
-}*/
