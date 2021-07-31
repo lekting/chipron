@@ -13,6 +13,7 @@ export default interface ParsedObject {
     description?: string;
     trailer?: string;
     season?: string;
+    dubber?: string;
     movieLink?: string[];
     count_of_series?: number;
     tempVideoName?: string;

@@ -322,9 +322,11 @@ export default class rezka extends ParseModule {
                     ctx,
                     layer.text.text,
                     layer.text.style.fontSize,
-                    layer.left - 10,
+                    288,
                     height
                 );
+                height += 24;
+                this.writeTitle(ctx, "ролях", 27.66, 55, height, "Bold");
             }
 
             if (
@@ -334,13 +336,11 @@ export default class rezka extends ParseModule {
             ) {
                 layer.text.text = `${object.actors[2]} ${object.actors[3]}`;
 
-                height += 24;
-                this.writeTitle(ctx, "ролях", 27.66, 55, height, "Bold");
                 this.writeText(
                     ctx,
                     layer.text.text,
                     layer.text.style.fontSize,
-                    layer.left - 10,
+                    288,
                     height
                 );
             }

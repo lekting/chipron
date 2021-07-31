@@ -153,7 +153,7 @@ export default class YummyAnime extends ParseModule {
                 if (
                     element.includes("Kodik") &&
                     element.includes("video-block-description") &&
-                    this.isPlayer(element) &&
+                    (data.dubber = this.isPlayer(element)) &&
                     !data.movieLink
                 ) {
                     data.movieLink = [];
@@ -176,9 +176,9 @@ export default class YummyAnime extends ParseModule {
 
     private isPlayer(element: string) {
         for (let dub of this.allowedTranslators)
-            if (element.includes(`Озвучка ${dub}`)) return true;
+            if (element.includes(`Озвучка ${dub}`)) return dub;
 
-        return false;
+        return null;
     }
 
     //Download text TS segment
@@ -361,7 +361,14 @@ export default class YummyAnime extends ParseModule {
 
         let texts = psd.children[2].children;
 
-        let { ctx, canvas } = await this.renderDefaultCanvas(object);
+        let { ctx, canvas, height } = await this.renderDefaultCanvas(object);
+
+        if(object.dubber) {
+            height += 44;
+            this.writeTitle(ctx, "Озвучка", 27.66, 55, height, "Bold");
+            this.writeText(ctx, object.dubber, 25.73, 288, height);
+        }
+
         for (let layer of texts) {
             //Drawing image
             if (layer.name == "Layer 113" && object.poster) {

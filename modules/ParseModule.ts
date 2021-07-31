@@ -71,8 +71,8 @@ export default abstract class Module {
         //Write title of movie
         this.writeTitle(
             ctx,
-            object.name.length > 31
-                ? object.name.slice(0, 31) + "..."
+            object.name.length > 30
+                ? object.name.slice(0, 30) + "..."
                 : object.name,
             26.66,
             55,
@@ -83,7 +83,7 @@ export default abstract class Module {
             //Write date title
             this.writeTitle(ctx, "Дата выхода", 27.66, 55, height, "Bold");
             //Write date
-            this.writeText(ctx, object.year, 25.73, 298, height);
+            this.writeText(ctx, object.year, 25.73, 288, height);
         }
 
         if (object.country && object.country.length) {
@@ -91,7 +91,7 @@ export default abstract class Module {
             height += 44;
             this.writeTitle(ctx, "Страна", 27.66, 55, height, "Bold");
             //Write country
-            this.writeText(ctx, object.country[0], 25.73, 298, height);
+            this.writeText(ctx, object.country[0], 25.73, 288, height);
         }
 
         if (object.director) {
@@ -99,7 +99,7 @@ export default abstract class Module {
             //Write director title
             this.writeTitle(ctx, "Режиссёр", 27.66, 55, height, "Bold");
             //Write director
-            this.writeText(ctx, object.director, 25.73, 298, height);
+            this.writeText(ctx, object.director, 25.73, 288, height);
         }
 
         await this.downloadPosterTemp(object.poster);

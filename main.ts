@@ -163,6 +163,11 @@ bot.on("message", async (message) => {
 
             //sending poster(jpg, psd) and video to trash-channel
             await sendPost(video, templateName, outText, parsed.name, duration);
+
+            //delete all temp files after upload
+            fs.unlinkSync(`./temp/${templateName}.psd`);
+            fs.unlinkSync(`./temp/${templateName}.jpg`);
+            fs.unlinkSync(`./temp/${video}.mp4`);
         }
     }
 
