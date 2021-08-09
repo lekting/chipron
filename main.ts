@@ -352,7 +352,8 @@ function sendPrompt(/* mc: mongoWorker */) {
 }
 
 function getWorkingModule(url: string): ParseModule {
-    if (!(url.startsWith("https://") || url.startsWith("http://"))) return null;
+    if (!url || !(url.startsWith("https://") || url.startsWith("http://")))
+        return null;
 
     const link = url.match(/\/\/(.*?)\//)[1];
 

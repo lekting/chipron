@@ -137,8 +137,11 @@ export default class YummyAnime extends ParseModule {
                     for (; i < html.length; i++) {
                         if (html[i].includes("</ul>")) break;
 
-                        if (html[i].includes("<li>"))
-                            data.genres.push(striptags(html[i]).trim());
+                        if (html[i].includes("<li>")) {
+                            data.genres.push(
+                                striptags(html[i]).trim().replace(/ /g, "")
+                            );
+                        }
                     }
                 }
 
@@ -189,7 +192,7 @@ export default class YummyAnime extends ParseModule {
 
             await this.runFFMPEG([
                 "-i",
-                "http:" + downloadLink,
+                (downloadLink.startsWith("//") ? "http:" : "") + downloadLink,
                 "-acodec",
                 "copy",
                 "-vcodec",
@@ -249,8 +252,13 @@ export default class YummyAnime extends ParseModule {
             const concated = await this.concat(segments);
 
             //Delete all downloadeg segments cuz we already concated
-            for (const segment of segments)
-                fs.unlinkSync(`./temp/${segment}.ts`);
+            for (const segment of segments) {
+                let segmentPath = `./temp/${segment}.ts`;
+
+                if (!fs.existsSync(segmentPath)) continue;
+
+                fs.unlinkSync(segmentPath);
+            }
 
             const randName = this.makeid(7);
 
@@ -292,66 +300,70 @@ export default class YummyAnime extends ParseModule {
 
     public fuckKodik(link: string): Promise<string> {
         return new Promise((resolve) => {
-            this.makeRequest("http:" + link, (body: any) => {
-                if (!body) {
-                    return resolve("");
-                }
+            this.makeRequest(
+                (link.startsWith("//") ? "http:" : "") + link,
+                (body: any) => {
+                    if (!body) {
+                        return resolve("");
+                    }
 
-                const html = body.split(/\r?\n/);
+                    const html = body.split(/\r?\n/);
 
-                for (let i = 0; i < html.length; i++) {
-                    const elem = html[i];
-                    if (elem.includes("iframe.src")) {
-                        let link = elem.match(/iframe.src = "(.+)";/)[1];
-                        let splitted = link.split("/");
+                    for (let i = 0; i < html.length; i++) {
+                        const elem = html[i];
+                        if (elem.includes("iframe.src")) {
+                            let link = elem.match(/iframe.src = "(.+)";/)[1];
+                            let splitted = link.split("/");
 
-                        let attrs: string[] = splitted[splitted.length - 1]
-                            .split("?")[1]
-                            .split("&");
+                            let attrs: string[] = splitted[splitted.length - 1]
+                                .split("?")[1]
+                                .split("&");
 
-                        let data: any = {
-                            bad_user: false,
-                            hash2: "vbWENyTwIn8I",
-                            d: "kodik.info",
-                            d_sign: "8022187ea4f80a819c8b1295a86abff3713891fb8ec9f2b3958cd8152763228e",
-                            pd: "",
-                            pd_sign: "",
-                            ref: "https://kodik.info/",
-                            ref_sign:
-                                "e974598ad26a91e91d60bc0a954a2028105ec11f0a441c41ea25ea0db1a2cfc9",
-                            hash: splitted[6],
-                            type: splitted[4] || "seria",
-                            id: splitted[5],
-                            info: "{}",
-                        };
+                            let data: any = {
+                                bad_user: false,
+                                hash2: "vbWENyTwIn8I",
+                                d: "kodik.info",
+                                d_sign: "8022187ea4f80a819c8b1295a86abff3713891fb8ec9f2b3958cd8152763228e",
+                                pd: "",
+                                pd_sign: "",
+                                ref: "https://kodik.info/",
+                                ref_sign:
+                                    "e974598ad26a91e91d60bc0a954a2028105ec11f0a441c41ea25ea0db1a2cfc9",
+                                hash: splitted[6],
+                                type: splitted[4] || "seria",
+                                id: splitted[5],
+                                info: "{}",
+                            };
 
-                        attrs.forEach((atr) => {
-                            let splitted_atr = atr.split("=");
+                            attrs.forEach((atr) => {
+                                let splitted_atr = atr.split("=");
 
-                            if (["min_age"].includes(splitted_atr[0])) return;
+                                if (["min_age"].includes(splitted_atr[0]))
+                                    return;
 
-                            data[splitted_atr[0]] = splitted_atr[1];
-                        });
+                                data[splitted_atr[0]] = splitted_atr[1];
+                            });
 
-                        const params = new URLSearchParams();
+                            const params = new URLSearchParams();
 
-                        Object.keys(data).forEach((val) =>
-                            params.append(val, data[val])
-                        );
+                            Object.keys(data).forEach((val) =>
+                                params.append(val, data[val])
+                            );
 
-                        this.makePostRequest(
-                            "https://kodik.info/get-video-info",
-                            params,
-                            (body: any) => {
-                                if (!body) return resolve("");
+                            this.makePostRequest(
+                                "https://kodik.info/get-video-info",
+                                params,
+                                (body: any) => {
+                                    if (!body) return resolve("");
 
-                                resolve(body.links["720"][0].src);
-                            }
-                        );
-                        break;
+                                    resolve(body.links["720"][0].src);
+                                }
+                            );
+                            break;
+                        }
                     }
                 }
-            });
+            );
         });
     }
 
