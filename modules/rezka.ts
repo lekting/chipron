@@ -6,7 +6,6 @@ import { createCanvas, loadImage } from "canvas";
 import * as fs from "fs";
 import ParseModule from "./ParseModule";
 import ParsedObject from "../interfaces/IParseObject";
-import axios from "axios";
 
 interface ITranslators {
     id: number;
@@ -15,8 +14,8 @@ interface ITranslators {
 
 export default class rezka extends ParseModule {
     private allowedTranslators = [
-        111, //HDrezka Studio Russian
         56, //Дубляж
+        111, //HDrezka Studio Russian
         238, //Оригинал
     ];
 
