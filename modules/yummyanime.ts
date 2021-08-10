@@ -139,7 +139,7 @@ export default class YummyAnime extends ParseModule {
 
                         if (html[i].includes("<li>")) {
                             data.genres.push(
-                                striptags(html[i]).trim().replace(/ /g, "")
+                                striptags(html[i]).trim().replace(/ /g, "_")
                             );
                         }
                     }

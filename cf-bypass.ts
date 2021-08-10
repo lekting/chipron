@@ -9,7 +9,7 @@ import StealthPlugin from "puppeteer-extra-plugin-stealth";
 import { Browser } from "puppeteer";
 import CFBypassResponse from "./interfaces/CFBypassResponse";
 
-//cloudflare bypass base on a browser (chromium, puppeteer)
+//cloudflare bypass based on a browser (chromium, puppeteer)
 export default class cf_bypass {
     constructor() {
         Puppeteer.use(StealthPlugin());

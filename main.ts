@@ -90,11 +90,11 @@ function wait(seconds: number) {
 
     bot.on("message", async (message) => {
         if (disabling) return;
-        if (!message || !message.chat) return console.log("NOONOONOON");
+        if (!message || !message.chat || !message.text)
+            return bot.sendMessage(message.chat.id, "Я те ща въебу");
 
-        if (!config.telegramAdmins.includes(message.chat.id)) {
+        if (!config.telegramAdmins.includes(message.chat.id))
             return bot.sendMessage(message.chat.id, "Ты кто блять!?");
-        }
 
         //if we writed command
         if (message.text.startsWith("/")) {

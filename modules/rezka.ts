@@ -252,7 +252,7 @@ export default class rezka extends ParseModule {
                     element.includes("initCDNMoviesEvents") &&
                     (!data.movieLink || !data.movieLink.length)
                 ) {
-                    data.movieLink = this.matchSeries(data.url);
+                    data.movieLink = this.matchSeries(html[i + 2]);
                 }
 
                 if (element.includes('description_text">')) {
