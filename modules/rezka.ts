@@ -6,8 +6,20 @@ import { createCanvas, loadImage } from "canvas";
 import * as fs from "fs";
 import ParseModule from "./ParseModule";
 import ParsedObject from "../interfaces/IParseObject";
+import axios from "axios";
+
+interface ITranslators {
+    id: number;
+    translatorId: number;
+}
 
 export default class rezka extends ParseModule {
+    private allowedTranslators = [
+        111, //HDrezka Studio Russian
+        56, //Дубляж
+        238, //Оригинал
+    ];
+
     constructor(cfBypass: cf_bypass) {
         super("rezka", ["rezka.ag", "hdrezka.sh"], cfBypass);
     }
@@ -156,11 +168,11 @@ export default class rezka extends ParseModule {
 
             const data: ParsedObject = {};
 
-            let i = 0;
             data.type = 0;
 
             data.url = url;
-            for (const element of html) {
+            for (let i = 0; i < html.length; i++) {
+                const element = html[i];
                 if (element.includes('<h1 itemprop="name">')) {
                     data.name = element.match(/<h1 itemprop="name">(.+)</)[1];
                 }
@@ -203,20 +215,45 @@ export default class rezka extends ParseModule {
                     re.forEach((el) => data.actors.push(el[1]));
                 }
 
-                if (element.includes("initCDNMoviesEvents")) {
-                    let matches = [
-                        ...html[i + 2].matchAll(/(\[1080p\]|\[720p\])(.*?),/g),
-                    ];
-                    matches = matches.reverse();
-                    data.movieLink = [];
+                if (element.includes("translators-list")) {
+                    const translators: ITranslators[] = [];
 
-                    if (matches[0] && matches[0].length > 1) {
-                        data.movieLink.push(
-                            matches[0][2]
-                                .replace(/\\\//g, "/")
-                                .match(/(.*?) or/)[1]
-                        );
+                    for (; i < html.length; i++) {
+                        if (html[i].includes("</ul>")) break;
+
+                        if (html[i].includes("<li")) {
+                            const id = html[i].match(/data-id="(.+)"/)[1];
+                            const translatorId = html[i].match(
+                                /data-translator_id="(.+)"/
+                            )[1];
+
+                            if (!id || !translatorId) continue;
+
+                            translators.push({
+                                id: parseInt(id),
+                                translatorId: parseInt(translatorId),
+                            });
+                        }
                     }
+
+                    if (!translators.length) continue;
+
+                    data.movieLink = await this.getCdnSeries(
+                        translators.sort((a, b) => {
+                            return a.translatorId > b.translatorId
+                                ? 1
+                                : b.translatorId > a.translatorId
+                                ? -1
+                                : 0;
+                        })
+                    );
+                }
+
+                if (
+                    element.includes("initCDNMoviesEvents") &&
+                    (!data.movieLink || !data.movieLink.length)
+                ) {
+                    data.movieLink = this.matchSeries(data.url);
                 }
 
                 if (element.includes('description_text">')) {
@@ -247,12 +284,66 @@ export default class rezka extends ParseModule {
 
                     temp.forEach((el) => data.genres.push(el[1]));
                 }
-
-                i++;
             }
 
             resolve(data);
         });
+    }
+
+    private matchSeries(urls: string) {
+        let matches = [...urls.matchAll(/(\[1080p\]|\[720p\])(.*?),/g)];
+        matches = matches.reverse();
+        const links: string[] = [];
+
+        if (matches[0] && matches[0].length > 1) {
+            links.push(
+                matches[0][2].replace(/\\\//g, "/").match(/(.*?) or/)[1]
+            );
+        }
+
+        return links;
+    }
+
+    private getCdnSeries(translators: ITranslators[]): Promise<string[]> {
+        for (const translator of translators) {
+            if (this.allowedTranslators.includes(translator.translatorId)) {
+                return new Promise((resolve) => {
+                    const currentTime = new Date().getTime();
+
+                    const params = new URLSearchParams();
+                    params.append("id", translator.id.toString());
+                    params.append(
+                        "translator_id",
+                        translator.translatorId.toString()
+                    );
+                    params.append("action", "get_movie");
+                    params.append("is_camrip", "0");
+                    params.append("is_ads", "0");
+                    params.append("is_director", "0");
+
+                    this.makePostRequest(
+                        `https://hdrezka.sh/ajax/get_cdn_series/?t=${currentTime}`,
+                        params,
+                        (data: {
+                            success: boolean;
+                            message: string;
+                            url: string;
+                        }) => {
+                            if (!data.success) {
+                                console.log(
+                                    "ERROR WHILE PARSTING HDREZKA MOVIES"
+                                );
+                                return resolve([]);
+                            }
+
+                            resolve(this.matchSeries(data.url));
+                        }
+                    );
+                });
+            }
+        }
+
+        return Promise.resolve([]);
     }
 
     async writePsd(object: ParsedObject) {

@@ -197,6 +197,9 @@ export default abstract class Module {
             const proc = spawn("ffmpeg", ["-y", "-hide_banner", ...args]);
 
             proc.stderr.setEncoding("utf8");
+            proc.stderr.on("error", (err: string) => {
+                console.log("err", err);
+            });
             proc.stderr.on("data", (data: string) => {
                 if (allLog) console.log(data);
 

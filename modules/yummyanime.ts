@@ -79,7 +79,7 @@ export default class YummyAnime extends ParseModule {
             data.country = ["Япония"];
 
             for (let i = 0; i < html.length; i++) {
-                let element = html[i];
+                const element = html[i];
                 if (element.includes('class="preview-rating"')) {
                     data.name = html[i - 4].trim();
                 }
@@ -224,19 +224,22 @@ export default class YummyAnime extends ParseModule {
                     .join("\n")
             );
 
-            await this.runFFMPEG([
-                "-f",
-                "concat",
-                "-safe",
-                "0",
-                "-i",
-                `./temp/${concateFileName}.txt`,
-                "-acodec",
-                "copy",
-                "-vcodec",
-                "copy",
-                `./temp/${randName}_out.mp4`,
-            ]);
+            await this.runFFMPEG(
+                [
+                    "-f",
+                    "concat",
+                    "-safe",
+                    "0",
+                    "-i",
+                    `./temp/${concateFileName}.txt`,
+                    "-acodec",
+                    "copy",
+                    "-vcodec",
+                    "copy",
+                    `./temp/${randName}_out.mp4`,
+                ],
+                true
+            );
 
             fs.unlinkSync(`./temp/${concateFileName}.txt`);
             resolve(`${randName}_out`);
@@ -262,35 +265,38 @@ export default class YummyAnime extends ParseModule {
 
             const randName = this.makeid(7);
 
-            await this.runFFMPEG([
-                "-hwaccel",
-                "cuvid",
-                "-i",
-                `./temp/${concated}.mp4`,
-                "-c:v",
-                "hevc_nvenc",
-                "-rc",
-                "vbr",
-                "-cq",
-                "24",
-                "-qmin",
-                "24",
-                "-qmax",
-                "24",
-                "-profile:v",
-                "main10",
-                "-pix_fmt",
-                "p010le",
-                "-b:v",
-                "0K",
-                "-c:a",
-                "aac",
-                "-map",
-                "0",
-                "-movflags",
-                "faststart",
-                `./temp/${randName}.mp4`,
-            ]);
+            await this.runFFMPEG(
+                [
+                    "-hwaccel",
+                    "cuvid",
+                    "-i",
+                    `./temp/${concated}.mp4`,
+                    "-c:v",
+                    "hevc_nvenc",
+                    "-rc",
+                    "vbr",
+                    "-cq",
+                    "24",
+                    "-qmin",
+                    "24",
+                    "-qmax",
+                    "24",
+                    "-profile:v",
+                    "main10",
+                    "-pix_fmt",
+                    "p010le",
+                    "-b:v",
+                    "0K",
+                    "-c:a",
+                    "aac",
+                    "-map",
+                    "0",
+                    "-movflags",
+                    "faststart",
+                    `./temp/${randName}.mp4`,
+                ],
+                true
+            );
 
             //Delete concated file, cuz we not needed more
             fs.unlinkSync(`./temp/${concated}.mp4`);
