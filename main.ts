@@ -170,13 +170,13 @@ let tgClient: Client;
                 await bot.sendMessage(message.chat.id, "Делаю фотку 1");
                 await generateThumbnail(
                     video,
-                    randomNumber(5, Math.min(duration, 200))
+                    randomNumber(30, Math.min(duration, 300))
                 );
 
                 await bot.sendMessage(message.chat.id, "Делаю фотку 2");
                 await generateThumbnail(
                     video,
-                    randomNumber(5, Math.min(duration, 300)),
+                    randomNumber(50, Math.min(duration, 400)),
                     2
                 );
 

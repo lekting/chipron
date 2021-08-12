@@ -258,10 +258,9 @@ export default class rezka extends ParseModule {
                 if (element.includes('description_text">')) {
                     data.description = element.match(/">(.+)<\/div>/)[1];
 
-                    data.description = data.description.slice(
-                        1,
-                        data.description.length - 1
-                    );
+                    data.description = data.description
+                        .slice(1, data.description.length - 1)
+                        .replace(/\<br\>/g, "");
                 }
 
                 if (element.includes("Про что сериал")) {
