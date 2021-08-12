@@ -144,6 +144,14 @@ let tgClient: Client;
         //Parsing sites
         const parsed = await module.parseObjects(message.text);
 
+        if (!parsed) {
+            working = false;
+            return await bot.sendMessage(
+                message.chat.id,
+                "Произошла ошибка при парсинге, не удалось получить ссылку!"
+            );
+        }
+
         const outText = module.getOutText(parsed);
 
         //if we have urls - downloaded them

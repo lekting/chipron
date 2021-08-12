@@ -51,7 +51,7 @@ export default class YummyAnime extends ParseModule {
     }
 
     parseObjects(url: string): Promise<ParsedObject> {
-        return new Promise(async (resolve, reject) => {
+        return new Promise(async (resolve) => {
             let html: string[];
 
             try {
@@ -63,11 +63,13 @@ export default class YummyAnime extends ParseModule {
                 });
 
                 if (!data || !data.solution) {
-                    return reject("empty_link");
+                    console.log("No link was grabbed from cf_bypass");
+                    return resolve(null);
                 }
                 html = data.solution.response.split(/\r?\n/);
             } catch (ex) {
-                return reject(ex);
+                console.log(ex);
+                return resolve(null);
             }
 
             const data: ParsedObject = {};
