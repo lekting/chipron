@@ -304,7 +304,8 @@ export default class YummyAnime extends ParseModule {
         });
     }
 
-    public fuckKodik(link: string): Promise<string> {
+    //hack kodik and get m3u8 stream for downloading
+    private fuckKodik(link: string): Promise<string> {
         return new Promise((resolve) => {
             this.makeRequest(
                 (link.startsWith("//") ? "http:" : "") + link,

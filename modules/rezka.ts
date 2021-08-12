@@ -37,7 +37,7 @@ export default class rezka extends ParseModule {
         }
     }
 
-    getCountry(country: string): string {
+    private getCountry(country: string): string {
         switch (country) {
             case "Испания": {
                 return "🇪🇸";

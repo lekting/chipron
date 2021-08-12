@@ -26,6 +26,8 @@ function wait(seconds: number) {
     return new Promise((resolve) => setTimeout(resolve, seconds * 1000));
 }
 
+let tgClient: Client;
+
 //Trying to connect to telegram server and auth
 (async () => {
     //start timeout
@@ -45,46 +47,52 @@ function wait(seconds: number) {
     let working = false;
     let disabling = false;
 
-    //Init telegram client with tdlib (not a bot)
-    const tgClient = new Client(new TDLib(), {
-        apiId: config.telegram.appId,
-        apiHash: config.telegram.apiHash,
-        verbosityLevel: 0,
-    });
+    if (config.telegram.appId && config.telegram.apiHash) {
+        //Init telegram client with tdlib (not a bot)
+        tgClient = new Client(new TDLib(), {
+            apiId: config.telegram.appId,
+            apiHash: config.telegram.apiHash,
+            verbosityLevel: 0,
+        });
+
+        await tgClient.connect();
+        await tgClient.login(() => ({
+            getPhoneNumber: (retry) =>
+                retry
+                    ? Promise.reject("Invalid phone number")
+                    : Promise.resolve(config.telegram.phone),
+            getAuthCode: (retry) =>
+                retry
+                    ? Promise.reject("Invalid auth code")
+                    : Promise.resolve(config.telegram.code),
+            getPassword: (_, retry) =>
+                retry
+                    ? Promise.reject("Invalid password")
+                    : Promise.resolve(config.telegram.password),
+            getName: () =>
+                Promise.resolve({
+                    firstName: config.telegram.firstName,
+                    lastName: config.telegram.lastName,
+                }),
+        }));
+
+        //tgClient.on("error", console.error);
+        tgClient.on("update", (val) => {
+            if (
+                val._ == "updateChatLastMessage" &&
+                val.last_message.chat_id == config.telegramTrashGroup
+            ) {
+                events.emit("newMessage", val.last_message);
+            }
+        });
+    } else {
+        log(
+            "Телеграм (tdlib) не загружен, видео не будут выгружаться в паблик."
+        );
+    }
 
     //Create temp folder for templ files (like exported jpg poster and videos)
     if (!fs.existsSync("./temp")) fs.mkdirSync("./temp");
-
-    await tgClient.connect();
-    await tgClient.login(() => ({
-        getPhoneNumber: (retry) =>
-            retry
-                ? Promise.reject("Invalid phone number")
-                : Promise.resolve(config.telegram.phone),
-        getAuthCode: (retry) =>
-            retry
-                ? Promise.reject("Invalid auth code")
-                : Promise.resolve(config.telegram.code),
-        getPassword: (_, retry) =>
-            retry
-                ? Promise.reject("Invalid password")
-                : Promise.resolve(config.telegram.password),
-        getName: () =>
-            Promise.resolve({
-                firstName: config.telegram.firstName,
-                lastName: config.telegram.lastName,
-            }),
-    }));
-
-    //tgClient.on("error", console.error);
-    tgClient.on("update", (val) => {
-        if (
-            val._ == "updateChatLastMessage" &&
-            val.last_message.chat_id == config.telegramTrashGroup
-        ) {
-            events.emit("newMessage", val.last_message);
-        }
-    });
 
     sendPrompt();
 
@@ -186,10 +194,13 @@ function wait(seconds: number) {
                     duration
                 );
 
-                //delete all temp files after upload
-                fs.unlinkSync(`./temp/${templateName}.psd`);
-                fs.unlinkSync(`./temp/${templateName}.jpg`);
-                fs.unlinkSync(`./temp/${video}.mp4`);
+                //if we not connected to telegram - save files cuz we not uploading to public
+                if (tgClient) {
+                    //delete all temp files after upload
+                    fs.unlinkSync(`./temp/${templateName}.psd`);
+                    fs.unlinkSync(`./temp/${templateName}.jpg`);
+                    fs.unlinkSync(`./temp/${video}.mp4`);
+                }
             }
         }
 
@@ -276,7 +287,15 @@ function wait(seconds: number) {
         outText: string,
         name: string,
         videoDuration: number
-    ): Promise<any> {
+    ): Promise<void | message | messages> {
+        if (!tgClient) {
+            bot.sendMessage(
+                userId,
+                "Телеграм не подключён, видео не загрузится в паблик."
+            );
+            return Promise.resolve();
+        }
+
         //send psd
         await awaitTelegramMessage(
             tgClient
