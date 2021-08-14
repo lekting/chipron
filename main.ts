@@ -44,7 +44,7 @@ let tgClient: Client;
     ];
     const events = new EventEmitter();
 
-    let working = false;
+    let queue: string[] = [];
     let disabling = false;
 
     if (config.telegram.appId && config.telegram.apiHash) {
@@ -96,6 +96,103 @@ let tgClient: Client;
 
     sendPrompt();
 
+    let working = false;
+    async function checkNextLink(userId: number) {
+        if (queue.length == 0 || working) return;
+
+        working = true;
+        const link = queue.pop();
+
+        await bot.sendMessage(userId, `Начинаю обрабатывать ${link}`);
+
+        const module = getWorkingModule(link);
+
+        if (!module) {
+            return bot.sendMessage(
+                userId,
+                `Мне кажется, что ссылка вида "${link}" похожа на твою несуществующую семью`
+            );
+        }
+
+        //Parsing sites
+        const parsed = await module.parseObjects(link);
+
+        if (!parsed) {
+            return await bot.sendMessage(
+                userId,
+                "Произошла ошибка при парсинге, не удалось получить ссылку!"
+            );
+        }
+
+        const outText = module.getOutText(parsed);
+
+        //if we have urls - downloaded them
+        if (parsed.movieLink && parsed.movieLink.length) {
+            await bot.sendMessage(
+                userId,
+                `Скачиваю ${parsed.movieLink.length > 1 ? "серии" : "фильм"}...`
+            );
+
+            //Download a movie
+            const video = await module.downloadMovie(parsed.movieLink);
+
+            if (video) {
+                const duration = await getVideoDuration(video);
+
+                await bot.sendMessage(userId, "Делаю фотку 1");
+                await generateThumbnail(
+                    video,
+                    randomNumber(30, Math.min(duration, 300))
+                );
+
+                await bot.sendMessage(userId, "Делаю фотку 2");
+                await generateThumbnail(
+                    video,
+                    randomNumber(50, Math.min(duration, 400)),
+                    2
+                );
+
+                parsed.tempVideoName = video;
+
+                //generating psd file and drawing with canvas a poster
+                const templateName = await module.writePsd(parsed);
+
+                await bot.sendMessage(
+                    userId,
+                    `${
+                        parsed.movieLink.length > 1 ? "Аниме" : "Фильм"
+                    } успешно скачан, высылаю в паблик`
+                );
+
+                //sending poster(jpg, psd) and video to trash-channel
+                await sendPost(
+                    userId,
+                    video,
+                    templateName,
+                    outText,
+                    parsed.name,
+                    duration
+                );
+
+                //if we not connected to telegram - save files cuz we not uploading to public
+                if (tgClient) {
+                    //delete all temp files after upload
+                    fs.unlinkSync(`./temp/${templateName}.psd`);
+                    fs.unlinkSync(`./temp/${templateName}.jpg`);
+                    fs.unlinkSync(`./temp/${video}.mp4`);
+                }
+            }
+        }
+
+        await bot.sendMessage(userId, outText);
+
+        await wait(1);
+
+        working = false;
+
+        checkNextLink(userId);
+    }
+
     bot.on("message", async (message) => {
         if (disabling) return;
         if (!message || !message.chat || !message.text)
@@ -118,103 +215,12 @@ let tgClient: Client;
             return;
         }
 
-        if (working) {
-            return bot.sendMessage(
-                message.chat.id,
-                "Да подожди ты блять, работаю..."
-            );
-        }
+        queue.push(message.text);
 
-        const module = getWorkingModule(message.text);
+        checkNextLink(message.chat.id);
 
-        if (!module) {
-            return bot.sendMessage(
-                message.chat.id,
-                `Мне кажется, что ссылка вида "${message.text}" похожа на твою несуществующую семью`
-            );
-        }
-
-        await bot.sendMessage(
-            message.chat.id,
-            "Начинаю пахать, я же блять раб, ну да..."
-        );
-
-        working = true;
-
-        //Parsing sites
-        const parsed = await module.parseObjects(message.text);
-
-        if (!parsed) {
-            working = false;
-            return await bot.sendMessage(
-                message.chat.id,
-                "Произошла ошибка при парсинге, не удалось получить ссылку!"
-            );
-        }
-
-        const outText = module.getOutText(parsed);
-
-        //if we have urls - downloaded them
-        if (parsed.movieLink && parsed.movieLink.length) {
-            await bot.sendMessage(
-                message.chat.id,
-                `Скачиваю ${parsed.movieLink.length > 1 ? "серии" : "фильм"}...`
-            );
-
-            //Download a movie
-            const video = await module.downloadMovie(parsed.movieLink);
-
-            if (video) {
-                const duration = await getVideoDuration(video);
-
-                await bot.sendMessage(message.chat.id, "Делаю фотку 1");
-                await generateThumbnail(
-                    video,
-                    randomNumber(30, Math.min(duration, 300))
-                );
-
-                await bot.sendMessage(message.chat.id, "Делаю фотку 2");
-                await generateThumbnail(
-                    video,
-                    randomNumber(50, Math.min(duration, 400)),
-                    2
-                );
-
-                parsed.tempVideoName = video;
-
-                //generating psd file and drawing with canvas a poster
-                const templateName = await module.writePsd(parsed);
-
-                await bot.sendMessage(
-                    message.chat.id,
-                    `${
-                        parsed.movieLink.length > 1 ? "Аниме" : "Фильм"
-                    } успешно скачан, высылаю в паблик`
-                );
-
-                //sending poster(jpg, psd) and video to trash-channel
-                await sendPost(
-                    message.chat.id,
-                    video,
-                    templateName,
-                    outText,
-                    parsed.name,
-                    duration
-                );
-
-                //if we not connected to telegram - save files cuz we not uploading to public
-                if (tgClient) {
-                    //delete all temp files after upload
-                    fs.unlinkSync(`./temp/${templateName}.psd`);
-                    fs.unlinkSync(`./temp/${templateName}.jpg`);
-                    fs.unlinkSync(`./temp/${video}.mp4`);
-                }
-            }
-        }
-
-        bot.sendMessage(message.chat.id, outText);
-
-        working = false;
+        if (queue.length)
+            bot.sendMessage(message.chat.id, "Ссылка добавлена в очередь");
     });
 
     function getVideoDuration(video: string): Promise<number> {
@@ -303,32 +309,6 @@ let tgClient: Client;
             );
             return Promise.resolve();
         }
-
-        //send psd
-        await awaitTelegramMessage(
-            tgClient
-                .invoke({
-                    _: "sendMessage",
-                    chat_id: config.telegramTrashGroup,
-                    input_message_content: {
-                        _: "inputMessageDocument",
-                        document: {
-                            _: "inputFileLocal",
-                            path: `./temp/${photo}.psd`,
-                        },
-                        caption: {
-                            _: "formattedText",
-                            text: name,
-                        },
-                    },
-                })
-                .catch((err) => {
-                    if (err.message) {
-                        bot.sendMessage(userId, err.message);
-                    }
-                    console.log(err);
-                })
-        );
 
         //send poster(jpg) and video as album
         await awaitTelegramMessage(
