@@ -219,31 +219,34 @@ export default abstract class Module {
     makePostRequest(
         url: string,
         data: any = {},
-        callback: any,
         external_headers: any = {}
-    ) {
-        axios
-            .post(url, data, {
-                headers: {
-                    "Content-Type": "application/x-www-form-urlencoded",
-                    Accept: "image/webp,image/apng,image/*,*/*;q=0.8",
-                    dnt: "1",
-                    "User-Agent":
-                        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.122 Safari/537.36",
-                    ...external_headers,
-                },
-            })
-            .then((response) => callback(response.data))
-            .catch(() => callback(null));
+    ): Promise<any> {
+        return new Promise((resolve, reject) => {
+            axios
+                .post(url, data, {
+                    headers: {
+                        "Content-Type": "application/x-www-form-urlencoded",
+                        Accept: "image/webp,image/apng,image/*,*/*;q=0.8",
+                        dnt: "1",
+                        "User-Agent":
+                            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.122 Safari/537.36",
+                        ...external_headers,
+                    },
+                })
+                .then((response) => resolve(response.data))
+                .catch(() => reject());
+        });
     }
 
-    makeRequest(url: string, callback: any) {
-        axios({
-            method: "get",
-            url: url,
-        })
-            .then((response) => callback(response.data))
-            .catch(() => callback(null));
+    makeRequest(url: string): Promise<any> {
+        return new Promise((resolve, reject) => {
+            axios({
+                method: "get",
+                url: url,
+            })
+                .then((response) => resolve(response.data))
+                .catch(() => reject());
+        });
     }
 }
 

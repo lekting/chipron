@@ -309,9 +309,8 @@ export default class YummyAnime extends ParseModule {
     //hack kodik and get m3u8 stream for downloading
     private fuckKodik(link: string): Promise<string> {
         return new Promise((resolve) => {
-            this.makeRequest(
-                (link.startsWith("//") ? "http:" : "") + link,
-                (body: any) => {
+            this.makeRequest((link.startsWith("//") ? "http:" : "") + link)
+                .then((body: string) => {
                     if (!body) {
                         return resolve("");
                     }
@@ -361,18 +360,25 @@ export default class YummyAnime extends ParseModule {
 
                             this.makePostRequest(
                                 "https://kodik.info/get-video-info",
-                                params,
-                                (body: any) => {
+                                params
+                            )
+                                .then((body: any) => {
                                     if (!body) return resolve("");
 
                                     resolve(body.links["720"][0].src);
-                                }
-                            );
+                                })
+                                .catch(() => {
+                                    console.log("cant parse kodik video-info");
+                                    resolve(null);
+                                });
                             break;
                         }
                     }
-                }
-            );
+                })
+                .catch(() => {
+                    console.log("cant parse kodik");
+                    resolve(null);
+                });
         });
     }
 

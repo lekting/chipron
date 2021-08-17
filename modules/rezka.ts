@@ -330,22 +330,28 @@ export default class rezka extends ParseModule {
 
                     this.makePostRequest(
                         `https://hdrezka.sh/ajax/get_cdn_series/?t=${currentTime}`,
-                        params,
-                        (data: {
-                            success: boolean;
-                            message: string;
-                            url: string;
-                        }) => {
-                            if (!data.success) {
-                                console.log(
-                                    "ERROR WHILE PARSTING HDREZKA MOVIES"
-                                );
-                                return resolve([]);
-                            }
+                        params
+                    )
+                        .then(
+                            (data: {
+                                success: boolean;
+                                message: string;
+                                url: string;
+                            }) => {
+                                if (!data.success) {
+                                    console.log(
+                                        "ERROR WHILE PARSTING HDREZKA MOVIES"
+                                    );
+                                    return resolve([]);
+                                }
 
-                            resolve(this.matchSeries(data.url));
-                        }
-                    );
+                                resolve(this.matchSeries(data.url));
+                            }
+                        )
+                        .catch(() => {
+                            console.log("cant parse cdn_series");
+                            resolve(null);
+                        });
                 });
             }
         }
