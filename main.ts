@@ -101,7 +101,7 @@ let tgClient: Client;
         if (queue.length == 0 || working) return;
 
         working = true;
-        const link = queue.pop();
+        const link = queue.shift();
 
         await bot.sendMessage(userId, `Начинаю обрабатывать ${link}`);
 
@@ -110,7 +110,7 @@ let tgClient: Client;
         if (!module) {
             return bot.sendMessage(
                 userId,
-                `Мне кажется, что ссылка вида "${link}" похожа на твою несуществующую семью`
+                `Ссылка "${link}" не кажется мне знакомой`
             );
         }
 
@@ -196,10 +196,10 @@ let tgClient: Client;
     bot.on("message", async (message) => {
         if (disabling) return;
         if (!message || !message.chat || !message.text)
-            return bot.sendMessage(message.chat.id, "Я те ща въебу");
+            return bot.sendMessage(message.chat.id, "Не надо так");
 
         if (!config.telegramAdmins.includes(message.chat.id))
-            return bot.sendMessage(message.chat.id, "Ты кто блять!?");
+            return bot.sendMessage(message.chat.id, "Ты кто!?");
 
         //if we writed command
         if (message.text.startsWith("/")) {

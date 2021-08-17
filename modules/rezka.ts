@@ -214,6 +214,12 @@ export default class rezka extends ParseModule {
                     re.forEach((el) => data.actors.push(el[1]));
                 }
 
+                if (element.includes("b-sidelinks__link show-trailer")) {
+                    const temp = html[i].match(/data-id="(.*?)"/);
+
+                    if (temp) data.id = parseInt(temp[1]);
+                }
+
                 if (element.includes("translators-list")) {
                     const translators: ITranslators[] = [];
 
@@ -221,15 +227,18 @@ export default class rezka extends ParseModule {
                         if (html[i].includes("</ul>")) break;
 
                         if (html[i].includes("<li")) {
-                            const id = html[i].match(/data-id="(.+)"/)[1];
+                            const temp = html[i].match(/data-id="(.+)"/);
+
+                            if (!data.id && temp) data.id = parseInt(temp[1]);
+
                             const translatorId = html[i].match(
                                 /data-translator_id="(.+)"/
                             )[1];
 
-                            if (!id || !translatorId) continue;
+                            if (!data.id || !translatorId) continue;
 
                             translators.push({
-                                id: parseInt(id),
+                                id: data.id,
                                 translatorId: parseInt(translatorId),
                             });
                         }
