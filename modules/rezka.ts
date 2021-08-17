@@ -12,6 +12,11 @@ interface ITranslators {
     translatorId: number;
 }
 
+interface ICountry {
+    name: string;
+    flag: string;
+}
+
 export default class rezka extends ParseModule {
     private allowedTranslators = [
         56, //Дубляж
@@ -19,8 +24,16 @@ export default class rezka extends ParseModule {
         238, //Оригинал
     ];
 
+    private countries: ICountry[] = [];
+
     constructor(cfBypass: cf_bypass) {
         super("rezka", ["rezka.ag", "hdrezka.sh"], cfBypass);
+
+        const countriesPath = "./jsons/countries.json";
+
+        if (!fs.existsSync(countriesPath)) return;
+
+        this.countries = JSON.parse(fs.readFileSync(countriesPath).toString());
     }
 
     getTypeOfVideo(type: number): string {
@@ -37,60 +50,14 @@ export default class rezka extends ParseModule {
         }
     }
 
-    private getCountry(country: string): string {
-        switch (country) {
-            case "Испания": {
-                return "🇪🇸";
-            }
-            case "Норвегия": {
-                return "🇳🇴";
-            }
-            case "Дания": {
-                return "🇩🇰";
-            }
-            case "Россия": {
-                return "🇷🇺";
-            }
-            case "Великобритания": {
-                return "🇬🇧";
-            }
-            case "Франция": {
-                return "🇫🇷";
-            }
-            case "Германия": {
-                return "🇩🇪";
-            }
-            case "Канада": {
-                return "🇨🇦";
-            }
-            case "Китай": {
-                return "🇨🇳";
-            }
-            case "Бразилия": {
-                return "🇧🇷";
-            }
-            case "Бельгия": {
-                return "🇧🇪";
-            }
-            case "Индия": {
-                return "🇮🇳";
-            }
-            case "Австралия": {
-                return "🇦🇺";
-            }
-            case "Украина": {
-                return "🇺🇦";
-            }
-            case "Турция": {
-                return "🇹🇷";
-            }
-            case "Корея Южная": {
-                return "🇰🇷";
-            }
-            default: {
-                return "🇱🇷";
-            }
-        }
+    private getCountry(countryName: string): string {
+        const country = this.countries.find((countryB) =>
+            countryB.name.includes(countryName)
+        );
+
+        if (country) return country.flag;
+
+        return "🇱🇷";
     }
 
     downloadMovie(url: string[]): Promise<string> {

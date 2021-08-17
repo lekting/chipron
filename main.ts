@@ -2,8 +2,6 @@ process.env.NTBA_FIX_319 = "1"; //fix node-telegram-bot-api promise cancelation
 
 import config from "./config";
 
-import colors from "colors/safe";
-
 import rezka from "./modules/rezka";
 
 import YummyAnime from "./modules/yummyanime";
@@ -13,7 +11,6 @@ import "ag-psd/initialize-canvas.js";
 
 import { Client } from "tdl";
 import { TDLib } from "tdl-tdlib-addon";
-import { spawn } from "child_process";
 
 import inquirer from "inquirer";
 import TelegramBot from "node-telegram-bot-api";
@@ -22,11 +19,22 @@ import cf_bypass from "./cf-bypass";
 import { message, messages } from "tdlib-types";
 import EventEmitter from "events";
 
+import {
+    randomNumber,
+    log,
+    getVideoDuration,
+    generateThumbnail,
+} from "./utils";
+
 function wait(seconds: number) {
     return new Promise((resolve) => setTimeout(resolve, seconds * 1000));
 }
 
 let tgClient: Client;
+const cfBypass = new cf_bypass();
+const modules: ParseModule[] = [new rezka(cfBypass), new YummyAnime(cfBypass)];
+
+const events = new EventEmitter();
 
 //Trying to connect to telegram server and auth
 (async () => {
@@ -36,13 +44,6 @@ let tgClient: Client;
     const bot = new TelegramBot(config.telegramBotToken, {
         polling: true,
     });
-
-    const cfBypass = new cf_bypass();
-    const modules: ParseModule[] = [
-        new rezka(cfBypass),
-        new YummyAnime(cfBypass),
-    ];
-    const events = new EventEmitter();
 
     let queue: string[] = [];
     let disabling = false;
@@ -223,49 +224,6 @@ let tgClient: Client;
             bot.sendMessage(message.chat.id, "Ссылка добавлена в очередь");
     });
 
-    function getVideoDuration(video: string): Promise<number> {
-        return new Promise((resolve) => {
-            //trying to spawn ffprobe and get video duration (in sec)
-            const proc = spawn("ffprobe", [
-                "-show_format",
-                `./temp/${video}.mp4`,
-            ]);
-
-            proc.stdout.on("data", async (data: Buffer) => {
-                const msg = data.toString();
-                if (!msg.includes("duration=")) return;
-
-                const videoDuration = msg.match(/duration=(.*)/);
-
-                resolve(parseInt(videoDuration[1]));
-            });
-        });
-    }
-
-    function generateThumbnail(
-        video: string,
-        seconds: number,
-        i: number = 1
-    ): Promise<void> {
-        return new Promise((resolve) => {
-            const proc = spawn("ffmpeg", [
-                "-y",
-                "-hide_banner",
-                "-i",
-                `./temp/${video}.mp4`,
-                "-ss",
-                seconds.toString(),
-                "-s",
-                "250x164",
-                "-vframes",
-                "1",
-                `./temp/${video}_${i}.jpg`,
-            ]);
-
-            proc.on("close", () => resolve());
-        });
-    }
-
     async function awaitTelegramMessage(
         message: Promise<void | message | messages>
     ): Promise<void> {
@@ -370,17 +328,6 @@ let tgClient: Client;
         );
     }
 
-    function log(text: string) {
-        console.log(
-            colors.bold(colors.green("Chipron | ")) +
-                colors.bold(colors.white(text))
-        );
-    }
-
-    function randomNumber(min: number, max: number) {
-        return Math.floor(Math.random() * (max - min) + min);
-    }
-
     //Mini-console for some commands
     function sendPrompt(/* mc: mongoWorker */) {
         inquirer
@@ -414,16 +361,16 @@ let tgClient: Client;
                 sendPrompt();
             });
     }
-
-    function getWorkingModule(url: string): ParseModule {
-        if (!url || !(url.startsWith("https://") || url.startsWith("http://")))
-            return null;
-
-        const link = url.match(/\/\/(.*?)\//)[1];
-
-        for (let i = 0; i < modules.length; i++)
-            if (modules[i].getSite().includes(link)) return modules[i];
-
-        return null;
-    }
 })();
+
+function getWorkingModule(url: string): ParseModule {
+    if (!url || !(url.startsWith("https://") || url.startsWith("http://")))
+        return null;
+
+    const link = url.match(/\/\/(.*?)\//)[1];
+
+    for (let i = 0; i < modules.length; i++)
+        if (modules[i].getSite().includes(link)) return modules[i];
+
+    return null;
+}
