@@ -12,6 +12,10 @@ export function log(text: string) {
     );
 }
 
+export function wait(seconds: number) {
+    return new Promise((resolve) => setTimeout(resolve, seconds * 1000));
+}
+
 export function getVideoDuration(video: string): Promise<number> {
     return new Promise((resolve) => {
         //trying to spawn ffprobe and get video duration (in sec)

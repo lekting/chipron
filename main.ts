@@ -24,11 +24,8 @@ import {
     log,
     getVideoDuration,
     generateThumbnail,
+    wait,
 } from "./utils";
-
-function wait(seconds: number) {
-    return new Promise((resolve) => setTimeout(resolve, seconds * 1000));
-}
 
 let tgClient: Client;
 const cfBypass = new cf_bypass();
@@ -38,9 +35,6 @@ const events = new EventEmitter();
 
 //Trying to connect to telegram server and auth
 (async () => {
-    //start timeout
-    await wait(2);
-
     const bot = new TelegramBot(config.telegramBotToken, {
         polling: true,
     });
@@ -329,7 +323,7 @@ const events = new EventEmitter();
     }
 
     //Mini-console for some commands
-    function sendPrompt(/* mc: mongoWorker */) {
+    function sendPrompt() {
         inquirer
             .prompt({
                 type: "input",
@@ -343,8 +337,6 @@ const events = new EventEmitter();
                     if (command.command === "exit") {
                         disabling = true;
                         log("Сворачиваемся пацаны");
-
-                        //await mc.close();
                         process.exit();
                     } else {
                         if (command.command !== "help") {
