@@ -98,21 +98,23 @@ const events = new EventEmitter();
         working = true;
         const link = queue.shift();
 
-        await bot.sendMessage(userId, `Начинаю обрабатывать ${link}`);
-
         const module = getWorkingModule(link);
 
         if (!module) {
+            working = false;
             return bot.sendMessage(
                 userId,
                 `Ссылка "${link}" не кажется мне знакомой`
             );
         }
 
+        await bot.sendMessage(userId, `Начинаю обрабатывать ${link}`);
+
         //Parsing sites
         const parsed = await module.parseObjects(link);
 
         if (!parsed) {
+            working = false;
             return await bot.sendMessage(
                 userId,
                 "Произошла ошибка при парсинге, не удалось получить ссылку!"
